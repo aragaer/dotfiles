@@ -62,3 +62,10 @@
  '(inhibit-startup-screen t)
 
 (modify-syntax-entry ?_ "w")
+
+(setq backup-directory-alist
+      `(("." . ,(expand-file-name "backups" user-emacs-directory))))
+(setq auto-save-file-name-transforms
+      `((".*" ,(expand-file-name "backups" user-emacs-directory) t)))
+(setq auto-save-list-file-prefix
+      (expand-file-name "backups" user-emacs-directory))
