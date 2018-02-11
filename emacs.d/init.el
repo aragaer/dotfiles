@@ -63,9 +63,11 @@
 
 (modify-syntax-entry ?_ "w")
 
+(require 'files)
+
 (setq backup-directory-alist
-      `(("." . ,(expand-file-name "backups" user-emacs-directory))))
+      `(("." . ,(locate-user-emacs-file "backups"))))
 (setq auto-save-file-name-transforms
-      `((".*" ,(expand-file-name "backups" user-emacs-directory) t)))
+      `((".*" ,(locate-user-emacs-file "backups") t)))
 (setq auto-save-list-file-prefix
-      (expand-file-name "backups" user-emacs-directory))
+      (locate-user-emacs-file "backups/"))
