@@ -8,7 +8,7 @@ Config {
          Run Kbd [("us", "US"), ("ru", "RU")]
         ,Run Date "%Y.%m.%d %H:%M:%S" "date" 10
         ,Run StdinReader
-	,Run CommandReader "~/Projects/pymodoro/pymodoro.py" "pomodoro"
+        ,Run CommandReader "~/Projects/pymodoro/pymodoro.py" "pomodoro"
     ],
     sepChar = "%",
     alignSep = "}{",

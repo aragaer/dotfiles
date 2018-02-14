@@ -1,4 +1,3 @@
-import Data.List
 import System.IO
 import XMonad
 import XMonad.Actions.GridSelect
@@ -22,30 +21,23 @@ defaults = defaultConfig {
     modMask = mod4Mask, -- use the Windows button as mod
     terminal = "urxvt",
     manageHook = composeAll [
-		 	    className =? "Wine desktop" --> doFullFloat,
-		 	    className =? "InvisibleInc" --> doFullFloat,
-		 	    className =? "Star Rangers" --> doFullFloat,
 		 	    className =? "mpv" --> doFloat,
-			    className =? "Gimp-2.8"  --> doShift "*", -- may be "Gimp" or "Gimp-2.4" instead
-			    (className =? "Gimp-2.8" <&&> fmap ("tool" `isSuffixOf`) (stringProperty "WM_WINDOW_ROLE")) --> doFloat,
     	       	 	    manageDocks,
 			    isFullscreen --> doFullFloat,
 			    manageHook defaultConfig],
     layoutHook = avoidStruts $ smartBorders $ minimize $ boringWindows $ layoutHook defaultConfig,
-    handleEventHook    = do
-    		       docksEventHook
-    		       fullscreenEventHook,
+    handleEventHook    = fullscreenEventHook,
     startupHook = setWMName "LG3D"
 } `additionalKeys` myKeys
 
 myKeys = [
-         ((mod4Mask, xK_m), withFocused minimizeWindow),
-         ((mod4Mask .|. shiftMask, xK_m), sendMessage RestoreNextMinimizedWin),
-         ((mod4Mask, xK_apostrophe), sendMessage ToggleStruts),
-         ((mod4Mask, xK_Tab), focusDown),
-         ((mod4Mask .|. shiftMask, xK_Tab), focusUp),
-	 ((mod4Mask, xK_n), spawn "touch ~/.pomodoro_session"),
-	 ((mod4Mask .|. shiftMask, xK_n), spawn "rm ~/.pomodoro_session")
+          ((mod4Mask, xK_m), withFocused minimizeWindow),
+          ((mod4Mask .|. shiftMask, xK_m), sendMessage RestoreNextMinimizedWin),
+          ((mod4Mask, xK_apostrophe), sendMessage ToggleStruts),
+          ((mod4Mask, xK_Tab), focusDown),
+          ((mod4Mask .|. shiftMask, xK_Tab), focusUp),
+          ((mod4Mask, xK_n), spawn "touch ~/.pomodoro_session"),
+          ((mod4Mask .|. shiftMask, xK_n), spawn "rm ~/.pomodoro_session")
 	 ]
 
 main = do
