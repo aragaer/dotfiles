@@ -91,4 +91,7 @@
 (setq auto-save-list-file-prefix
       (locate-user-emacs-file "backups/"))
 
+(define-derived-mode my-writing-mode org-mode "my-writing"
+  (olivetti-mode t))
+
 (load "~/.emacs.d/norang-org")
