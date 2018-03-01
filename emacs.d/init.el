@@ -97,4 +97,8 @@
   (olivetti-mode t)
   (wc-mode t))
 
+(add-to-list 'default-frame-alist '(font . "freemono-12"))
+(add-text-properties (point-min) (point-max)
+		     '(line-spacing 0.25 line-height 1.25))
+
 (load "~/.emacs.d/norang-org")
