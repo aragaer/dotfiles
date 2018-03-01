@@ -71,6 +71,7 @@
  ;; If there is more than one, they won't work right.
  '(evil-search-module (quote evil-search))
  '(inhibit-startup-screen t)
+ '(wc-modeline-format "%tw")
  '(org-trello-current-prefix-keybinding "C-c o" nil (org-trello)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -91,7 +92,9 @@
 (setq auto-save-list-file-prefix
       (locate-user-emacs-file "backups/"))
 
+(require 'wc-mode)
 (define-derived-mode my-writing-mode org-mode "my-writing"
-  (olivetti-mode t))
+  (olivetti-mode t)
+  (wc-mode t))
 
 (load "~/.emacs.d/norang-org")
