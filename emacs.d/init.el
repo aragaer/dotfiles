@@ -13,21 +13,21 @@
 
 (package-initialize)
 
-(defvar *packages-need-refresh* t)
+(when (not (package-installed-p 'use-package))
+  (package-refresh-contents)
+  (package-install 'use-package))
 
-(defun install-if-not-yet (package)
-  (when (not (package-installed-p package))
-    (when *packages-need-refresh*
-      (package-refresh-contents)
-      (setf *packages-need-refresh* nil))
-    (package-install package)))
+(require 'use-package)
 
 ;; Can't properly use emacs without evil.
-(install-if-not-yet 'evil)
-(install-if-not-yet 'olivetti)
-(install-if-not-yet 'feature-mode)
-(install-if-not-yet 'org-plus-contrib)
-(install-if-not-yet 'reverse-im)
+(use-package evil
+  :ensure t)
+(use-package olivetti
+  :ensure t)
+(use-package feature-mode
+  :ensure t)
+(use-package reverse-im
+  :ensure t)
 
 (evil-mode)
 (tool-bar-mode -1)
@@ -45,7 +45,6 @@
 
 (add-hook 'go-mode-hook '(lambda () (setq tab-width 4)))
 
-(require 'reverse-im)
 (reverse-im-activate "russian-computer")
 
 ;;;;
@@ -53,7 +52,8 @@
 ;;;
 (add-to-list 'auto-mode-alist '("\\.\\(org\\|org_archive\\|txt\\)$" . org-mode))
 (add-to-list 'auto-mode-alist '("\\.m$" . octave-mode))
-(require 'org)
+(use-package org
+  :ensure org-plus-contrib)
 ;;
 ;; Standard key bindings
 (global-set-key "\C-cl" 'org-store-link)
@@ -72,18 +72,18 @@
  '(evil-search-module (quote evil-search))
  '(inhibit-startup-screen t)
  '(wc-modeline-format "%tw")
+ '(org-agenda-files nil)
  '(org-trello-current-prefix-keybinding "C-c o" nil (org-trello)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(org-mode-line-clock ((t (:background "grey75" :foreground "red" :box (:line-width -1 :style released-button)))) t)
- )
+ '(org-mode-line-clock ((t (:background "grey75" :foreground "red" :box (:line-width -1 :style released-button))))))
 
 (modify-syntax-entry ?_ "w")
 
-(require 'files)
+(use-package files)
 
 (setq backup-directory-alist
       `(("." . ,(locate-user-emacs-file "backups"))))
@@ -92,7 +92,8 @@
 (setq auto-save-list-file-prefix
       (locate-user-emacs-file "backups/"))
 
-(require 'wc-mode)
+(use-package wc-mode
+  :ensure t)
 (define-derived-mode my-writing-mode org-mode "my-writing"
   (olivetti-mode t)
   (wc-mode t))
