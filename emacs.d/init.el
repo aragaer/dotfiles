@@ -19,17 +19,43 @@
 
 (require 'use-package)
 
-;; Can't properly use emacs without evil.
+;; I can't properly use emacs without evil.
 (use-package evil
-  :ensure t)
+  :ensure t
+  :config
+  (evil-mode)
+  :custom
+  (evil-search-module (quote evil-search)))
+
 (use-package olivetti
   :ensure t)
+
 (use-package feature-mode
   :ensure t)
-(use-package reverse-im
-  :ensure t)
 
-(evil-mode)
+(use-package reverse-im
+  :ensure t
+  :config
+  (reverse-im-activate "russian-computer"))
+
+(use-package org
+  :ensure org-plus-contrib
+  :bind (("\C-cl" . org-store-link)
+	 ("\C-ca" . org-agenda)
+	 ("\C-cb" . org-iswitchb))
+  :mode ("\\.\\(org\\|org_archive\\|txt\\)$" . org-mode)
+  :custom
+  (org-agenda-files nil)
+  :custom-face
+  (org-mode-line-clock ((t (:background "grey75" :foreground "red" :box (:line-width -1 :style released-button))))))
+
+(use-package wc-mode
+  :ensure t
+  :custom
+  (wc-modeline-format "%tw"))
+
+(use-package files)
+
 (tool-bar-mode -1)
 (menu-bar-mode -1)
 
@@ -45,20 +71,8 @@
 
 (add-hook 'go-mode-hook '(lambda () (setq tab-width 4)))
 
-(reverse-im-activate "russian-computer")
-
-;;;;
-;;; Org Mode
-;;;
-(add-to-list 'auto-mode-alist '("\\.\\(org\\|org_archive\\|txt\\)$" . org-mode))
 (add-to-list 'auto-mode-alist '("\\.m$" . octave-mode))
-(use-package org
-  :ensure org-plus-contrib)
-;;
-;; Standard key bindings
-(global-set-key "\C-cl" 'org-store-link)
-(global-set-key "\C-ca" 'org-agenda)
-(global-set-key "\C-cb" 'org-iswitchb)
+
 (global-font-lock-mode 1)
 
 (setq show-trailing-whitespace t)
@@ -69,21 +83,9 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(evil-search-module (quote evil-search))
- '(inhibit-startup-screen t)
- '(wc-modeline-format "%tw")
- '(org-agenda-files nil)
- '(org-trello-current-prefix-keybinding "C-c o" nil (org-trello)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(org-mode-line-clock ((t (:background "grey75" :foreground "red" :box (:line-width -1 :style released-button))))))
+ '(inhibit-startup-screen t))
 
 (modify-syntax-entry ?_ "w")
-
-(use-package files)
 
 (setq backup-directory-alist
       `(("." . ,(locate-user-emacs-file "backups"))))
@@ -92,8 +94,6 @@
 (setq auto-save-list-file-prefix
       (locate-user-emacs-file "backups/"))
 
-(use-package wc-mode
-  :ensure t)
 (define-derived-mode my-writing-mode org-mode "my-writing"
   (olivetti-mode t)
   (wc-mode t))
