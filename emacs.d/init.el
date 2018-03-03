@@ -103,3 +103,19 @@
 		     '(line-spacing 0.25 line-height 1.25))
 
 (load "~/.emacs.d/norang-org")
+(put 'narrow-to-region 'disabled nil)
+(put 'narrow-to-page 'disabled nil)
+
+(setq daily-page-dir (expand-file-name "~/Dropbox/mind_dump/daily/"))
+
+(defun daily-page ()
+  (interactive)
+  (let ((header "#-*- Mode: my-writing -*-\n"))
+    (with-current-buffer
+	(find-file
+	 (concat daily-page-dir
+	  (format-time-string "%Y-%m-%d.txt" (current-time))))
+      (my-writing-mode)
+      (if (> 2 (point-max-marker))
+	  (insert header))
+      (narrow-to-region (length header) (point-max-marker)))))
