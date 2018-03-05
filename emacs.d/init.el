@@ -118,4 +118,4 @@
       (my-writing-mode)
       (if (> 2 (point-max-marker))
 	  (insert header))
-      (narrow-to-region (length header) (point-max-marker)))))
+      (narrow-to-region (1+ (length header)) (point-max-marker)))))
