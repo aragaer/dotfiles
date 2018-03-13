@@ -106,14 +106,16 @@
 (put 'narrow-to-region 'disabled nil)
 (put 'narrow-to-page 'disabled nil)
 
-(setq daily-page-dir (expand-file-name "~/Dropbox/mind_dump/daily/"))
+(let ((local-settings-file (locate-user-emacs-file "local_settings.el")))
+  (if (file-exists-p local-settings-file)
+      (load local-settings-file)))
 
 (defun daily-page ()
   (interactive)
   (let ((header "#-*- Mode: my-writing -*-\n"))
     (with-current-buffer
 	(find-file
-	 (concat daily-page-dir
+	 (concat *daily-page-dir*
 	  (format-time-string "%Y-%m-%d.txt" (current-time))))
       (my-writing-mode)
       (if (> 2 (point-max-marker))
