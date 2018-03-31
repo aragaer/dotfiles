@@ -83,7 +83,10 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(inhibit-startup-screen t))
+ '(inhibit-startup-screen t)
+ '(package-selected-packages
+   (quote
+    (slime wc-mode use-package reverse-im org-plus-contrib olivetti feature-mode evil))))
 
 (modify-syntax-entry ?_ "w")
 
@@ -121,3 +124,14 @@
       (if (> 2 (point-max-marker))
 	  (insert header))
       (narrow-to-region (1+ (length header)) (point-max-marker)))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(org-mode-line-clock ((t (:background "grey75" :foreground "red" :box (:line-width -1 :style released-button))))))
+
+(use-package slime
+  :ensure t
+  :config
+  (setq inferior-lisp-program "/usr/bin/sbcl"))
