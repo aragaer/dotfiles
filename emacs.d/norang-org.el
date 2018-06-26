@@ -124,237 +124,12 @@ Callers of this function already widen the buffer view."
           (setq is-subproject t))))
     (and is-a-task is-subproject)))
 
-(defun bh/list-sublevels-for-projects-indented ()
-  "Set org-tags-match-list-sublevels so when restricted to a subtree we list all subtasks.
-  This is normally used by skipping functions where this variable is already local to the agenda."
-  (if (marker-buffer org-agenda-restrict-begin)
-      (setq org-tags-match-list-sublevels 'indented)
-    (setq org-tags-match-list-sublevels nil))
-  nil)
-
-(defun bh/list-sublevels-for-projects ()
-  "Set org-tags-match-list-sublevels so when restricted to a subtree we list all subtasks.
-  This is normally used by skipping functions where this variable is already local to the agenda."
-  (if (marker-buffer org-agenda-restrict-begin)
-      (setq org-tags-match-list-sublevels t)
-    (setq org-tags-match-list-sublevels nil))
-  nil)
-
 (defvar bh/hide-scheduled-and-waiting-next-tasks t)
-
-(defun bh/toggle-next-task-display ()
-  (interactive)
-  (setq bh/hide-scheduled-and-waiting-next-tasks (not bh/hide-scheduled-and-waiting-next-tasks))
-  (when  (equal major-mode 'org-agenda-mode)
-    (org-agenda-redo))
-  (message "%s WAITING and SCHEDULED NEXT Tasks" (if bh/hide-scheduled-and-waiting-next-tasks "Hide" "Show")))
-
-(defun bh/skip-stuck-projects ()
-  "Skip trees that are not stuck projects"
-  (save-restriction
-    (widen)
-    (let ((next-headline (save-excursion (or (outline-next-heading) (point-max)))))
-      (if (bh/is-project-p)
-          (let* ((subtree-end (save-excursion (org-end-of-subtree t)))
-                 (has-next ))
-            (save-excursion
-              (forward-line 1)
-              (while (and (not has-next) (< (point) subtree-end) (re-search-forward "^\\*+ NEXT " subtree-end t))
-                (unless (member "WAITING" (org-get-tags-at))
-                  (setq has-next t))))
-            (if has-next
-                nil
-              next-headline)) ; a stuck project, has subtasks but no next task
-        nil))))
-
-(defun bh/skip-non-stuck-projects ()
-  "Skip trees that are not stuck projects"
-  ;; (bh/list-sublevels-for-projects-indented)
-  (save-restriction
-    (widen)
-    (let ((next-headline (save-excursion (or (outline-next-heading) (point-max)))))
-      (if (bh/is-project-p)
-          (let* ((subtree-end (save-excursion (org-end-of-subtree t)))
-                 (has-next ))
-            (save-excursion
-              (forward-line 1)
-              (while (and (not has-next) (< (point) subtree-end) (re-search-forward "^\\*+ NEXT " subtree-end t))
-                (unless (member "WAITING" (org-get-tags-at))
-                  (setq has-next t))))
-            (if has-next
-                next-headline
-              nil)) ; a stuck project, has subtasks but no next task
-        next-headline))))
-
-(defun bh/skip-non-projects ()
-  "Skip trees that are not projects"
-  ;; (bh/list-sublevels-for-projects-indented)
-  (if (save-excursion (bh/skip-non-stuck-projects))
-      (save-restriction
-        (widen)
-        (let ((subtree-end (save-excursion (org-end-of-subtree t))))
-          (cond
-           ((bh/is-project-p)
-            nil)
-           ((and (bh/is-project-subtree-p) (not (bh/is-task-p)))
-            nil)
-           (t
-            subtree-end))))
-    (save-excursion (org-end-of-subtree t))))
-
-(defun bh/skip-non-tasks ()
-  "Show non-project tasks.
-Skip project and sub-project tasks, habits, and project related tasks."
-  (save-restriction
-    (widen)
-    (let ((next-headline (save-excursion (or (outline-next-heading) (point-max)))))
-      (cond
-       ((bh/is-task-p)
-        nil)
-       (t
-        next-headline)))))
-
-(defun bh/skip-project-trees-and-habits ()
-  "Skip trees that are projects"
-  (save-restriction
-    (widen)
-    (let ((subtree-end (save-excursion (org-end-of-subtree t))))
-      (cond
-       ((bh/is-project-p)
-        subtree-end)
-       ((org-is-habit-p)
-        subtree-end)
-       (t
-        nil)))))
-
-(defun bh/skip-projects-and-habits-and-single-tasks ()
-  "Skip trees that are projects, tasks that are habits, single non-project tasks"
-  (save-restriction
-    (widen)
-    (let ((next-headline (save-excursion (or (outline-next-heading) (point-max)))))
-      (cond
-       ((org-is-habit-p)
-        next-headline)
-       ((and bh/hide-scheduled-and-waiting-next-tasks
-             (member "WAITING" (org-get-tags-at)))
-        next-headline)
-       ((bh/is-project-p)
-        next-headline)
-       ((and (bh/is-task-p) (not (bh/is-project-subtree-p)))
-        next-headline)
-       (t
-        nil)))))
-
-(defun bh/skip-project-tasks-maybe ()
-  "Show tasks related to the current restriction.
-When restricted to a project, skip project and sub project tasks, habits, NEXT tasks, and loose tasks.
-When not restricted, skip project and sub-project tasks, habits, and project related tasks."
-  (save-restriction
-    (widen)
-    (let* ((subtree-end (save-excursion (org-end-of-subtree t)))
-           (next-headline (save-excursion (or (outline-next-heading) (point-max))))
-           (limit-to-project (marker-buffer org-agenda-restrict-begin)))
-      (cond
-       ((bh/is-project-p)
-        next-headline)
-       ((org-is-habit-p)
-        subtree-end)
-       ((and (not limit-to-project)
-             (bh/is-project-subtree-p))
-        subtree-end)
-       ((and limit-to-project
-             (bh/is-project-subtree-p)
-             (member (org-get-todo-state) (list "NEXT")))
-        subtree-end)
-       (t
-        nil)))))
-
-(defun bh/skip-project-tasks ()
-  "Show non-project tasks.
-Skip project and sub-project tasks, habits, and project related tasks."
-  (save-restriction
-    (widen)
-    (let* ((subtree-end (save-excursion (org-end-of-subtree t))))
-      (cond
-       ((bh/is-project-p)
-        subtree-end)
-       ((org-is-habit-p)
-        subtree-end)
-       ((bh/is-project-subtree-p)
-        subtree-end)
-       (t
-        nil)))))
-
-(defun bh/skip-non-project-tasks ()
-  "Show project tasks.
-Skip project and sub-project tasks, habits, and loose non-project tasks."
-  (save-restriction
-    (widen)
-    (let* ((subtree-end (save-excursion (org-end-of-subtree t)))
-           (next-headline (save-excursion (or (outline-next-heading) (point-max)))))
-      (cond
-       ((bh/is-project-p)
-        next-headline)
-       ((org-is-habit-p)
-        subtree-end)
-       ((and (bh/is-project-subtree-p)
-             (member (org-get-todo-state) (list "NEXT")))
-        subtree-end)
-       ((not (bh/is-project-subtree-p))
-        subtree-end)
-       (t
-        nil)))))
-
-(defun bh/skip-projects-and-habits ()
-  "Skip trees that are projects and tasks that are habits"
-  (save-restriction
-    (widen)
-    (let ((subtree-end (save-excursion (org-end-of-subtree t))))
-      (cond
-       ((bh/is-project-p)
-        subtree-end)
-       ((org-is-habit-p)
-        subtree-end)
-       (t
-        nil)))))
-
-(defun bh/skip-non-subprojects ()
-  "Skip trees that are not projects"
-  (let ((next-headline (save-excursion (outline-next-heading))))
-    (if (bh/is-subproject-p)
-        nil
-      next-headline)))
 
 (setq org-archive-mark-done nil)
 (setq org-archive-location "%s_archive::* Archived Tasks")
 
-(defun bh/skip-non-archivable-tasks ()
-  "Skip trees that are not available for archiving"
-  (save-restriction
-    (widen)
-    ;; Consider only tasks with done todo headings as archivable candidates
-    (let ((next-headline (save-excursion (or (outline-next-heading) (point-max))))
-          (subtree-end (save-excursion (org-end-of-subtree t))))
-      (if (member (org-get-todo-state) org-todo-keywords-1)
-          (if (member (org-get-todo-state) org-done-keywords)
-              (let* ((daynr (string-to-int (format-time-string "%d" (current-time))))
-                     (a-month-ago (* 60 60 24 (+ daynr 1)))
-                     (last-month (format-time-string "%Y-%m-" (time-subtract (current-time) (seconds-to-time a-month-ago))))
-                     (this-month (format-time-string "%Y-%m-" (current-time)))
-                     (subtree-is-current (save-excursion
-                                           (forward-line 1)
-                                           (and (< (point) subtree-end)
-                                                (re-search-forward (concat last-month "\\|" this-month) subtree-end t)))))
-                (if subtree-is-current
-                    subtree-end ; Has a date in this month or last month, skip it
-                  nil))  ; available to archive
-            (or subtree-end (point-max)))
-        next-headline))))
-
 (setq org-alphabetical-lists t)
-
-(setq org-ditaa-jar-path "~/git/org-mode/contrib/scripts/ditaa.jar")
-(setq org-plantuml-jar-path "~/java/plantuml.jar")
 
 (add-hook 'org-babel-after-execute-hook 'bh/display-inline-images 'append)
 
@@ -370,25 +145,17 @@ Skip project and sub-project tasks, habits, and loose non-project tasks."
  (quote org-babel-load-languages)
  (quote ((emacs-lisp . t)
          (dot . t)
-         (ditaa . t)
          (R . t)
          (python . t)
-         (ruby . t)
          (gnuplot . t)
-         (clojure . t)
          (sh . t)
-         (ledger . t)
          (org . t)
-         (plantuml . t)
          (latex . t))))
 
 ; Do not prompt to confirm evaluation
 ; This may be dangerous - make sure you understand the consequences
 ; of setting this -- see the docstring for details
 (setq org-confirm-babel-evaluate nil)
-
-; Use fundamental mode when editing plantuml blocks with C-c '
-(add-to-list 'org-src-lang-modes (quote ("plantuml" . fundamental)))
 
 ;; Don't enable this because it breaks access to emacs from my Android phone
 (setq org-startup-with-inline-images nil)
@@ -406,82 +173,6 @@ Skip project and sub-project tasks, habits, and loose non-project tasks."
   _ - \n
   "#+end_" str "\n")
 
-;; splantuml - PlantUML Source block
-(define-skeleton skel-org-block-plantuml
-  "Insert a org plantuml block, querying for filename."
-  "File (no extension): "
-  "#+begin_src plantuml :file " str ".png :cache yes\n"
-  _ - \n
-  "#+end_src\n")
-
-(define-skeleton skel-org-block-plantuml-activity
-  "Insert a org plantuml block, querying for filename."
-  "File (no extension): "
-  "#+begin_src plantuml :file " str "-act.png :cache yes :tangle " str "-act.txt\n"
-  (bh/plantuml-reset-counters)
-  "@startuml\n"
-  "skinparam activity {\n"
-  "BackgroundColor<<New>> Cyan\n"
-  "}\n\n"
-  "title " str " - \n"
-  "note left: " str "\n"
-  "(*) --> \"" str "\"\n"
-  "--> (*)\n"
-  _ - \n
-  "@enduml\n"
-  "#+end_src\n")
-
-(defvar bh/plantuml-if-count 0)
-
-(defun bh/plantuml-if () 
-  (incf bh/plantuml-if-count)
-  (number-to-string bh/plantuml-if-count))
-
-(defvar bh/plantuml-loop-count 0)
-
-(defun bh/plantuml-loop () 
-  (incf bh/plantuml-loop-count)
-  (number-to-string bh/plantuml-loop-count))
-
-(defun bh/plantuml-reset-counters ()
-  (setq bh/plantuml-if-count 0
-        bh/plantuml-loop-count 0)
-  "")
-
-(define-skeleton skel-org-block-plantuml-activity-if
-  "Insert a org plantuml block activity if statement"
-  "" 
-  "if \"\" then\n"
-  "  -> [condition] ==IF" (setq ifn (bh/plantuml-if)) "==\n"
-  "  --> ==IF" ifn "M1==\n"
-  "  -left-> ==IF" ifn "M2==\n"
-  "else\n"
-  "end if\n"
-  "--> ==IF" ifn "M2==")
-
-(define-skeleton skel-org-block-plantuml-activity-for
-  "Insert a org plantuml block activity for statement"
-  "Loop for each: " 
-  "--> ==LOOP" (setq loopn (bh/plantuml-loop)) "==\n"
-  "note left: Loop" loopn ": For each " str "\n"
-  "--> ==ENDLOOP" loopn "==\n"
-  "note left: Loop" loopn ": End for each " str "\n" )
-
-(define-skeleton skel-org-block-plantuml-sequence
-  "Insert a org plantuml activity diagram block, querying for filename."
-  "File appends (no extension): "
-  "#+begin_src plantuml :file " str "-seq.png :cache yes :tangle " str "-seq.txt\n"
-  "@startuml\n"
-  "title " str " - \n"
-  "actor CSR as \"Customer Service Representative\"\n"
-  "participant CSMO as \"CSM Online\"\n"
-  "participant CSMU as \"CSM Unix\"\n"
-  "participant NRIS\n"
-  "actor Customer"
-  _ - \n
-  "@enduml\n"
-  "#+end_src\n")
-
 ;; sdot - Graphviz DOT block
 (define-skeleton skel-org-block-dot
   "Insert a org graphviz dot block, querying for filename."
@@ -492,13 +183,6 @@ Skip project and sub-project tasks, habits, and loose non-project tasks."
   "}\n"
   "#+end_src\n")
 
-;; sditaa - Ditaa source block
-(define-skeleton skel-org-block-ditaa
-  "Insert a org ditaa block, querying for filename."
-  "File (no extension): "
-  "#+begin_src ditaa :file " str ".png :cache yes\n"
-  _ - \n
-  "#+end_src\n")
 
 ;; selisp - Emacs Lisp source block
 (define-skeleton skel-org-block-elisp
@@ -516,91 +200,6 @@ Skip project and sub-project tasks, habits, and loose non-project tasks."
         (org-show-todo-tree nil))
     (bh/narrow-to-org-subtree)
     (org-show-todo-tree nil)))
-
-(defun bh/restrict-to-file-or-follow (arg)
-  "Set agenda restriction to 'file or with argument invoke follow mode.
-I don't use follow mode very often but I restrict to file all the time
-so change the default 'F' binding in the agenda to allow both"
-  (interactive "p")
-  (if (equal arg 4)
-      (org-agenda-follow-mode)
-    (widen)
-    (bh/set-agenda-restriction-lock 4)
-    (org-agenda-redo)
-    (beginning-of-buffer)))
-
-(add-hook 'org-agenda-mode-hook
-          '(lambda () (org-defkey org-agenda-mode-map "F" 'bh/restrict-to-file-or-follow))
-          'append)
-
-(defvar bh/project-list nil)
-
-(defun bh/view-next-project ()
-  (interactive)
-  (let (num-project-left current-project)
-    (unless (marker-position org-agenda-restrict-begin)
-      (goto-char (point-min))
-      ; Clear all of the existing markers on the list
-      (while bh/project-list
-        (set-marker (pop bh/project-list) nil))
-      (re-search-forward "Tasks to Refile")
-      (forward-visible-line 1))
-
-    ; Build a new project marker list
-    (unless bh/project-list
-      (while (< (point) (point-max))
-        (while (and (< (point) (point-max))
-                    (or (not (org-get-at-bol 'org-hd-marker))
-                        (org-with-point-at (org-get-at-bol 'org-hd-marker)
-                          (or (not (bh/is-project-p))
-                              (bh/is-project-subtree-p)))))
-          (forward-visible-line 1))
-        (when (< (point) (point-max))
-          (add-to-list 'bh/project-list (copy-marker (org-get-at-bol 'org-hd-marker)) 'append))
-        (forward-visible-line 1)))
-
-    ; Pop off the first marker on the list and display
-    (setq current-project (pop bh/project-list))
-    (when current-project
-      (org-with-point-at current-project
-        (setq bh/hide-scheduled-and-waiting-next-tasks nil)
-        (bh/narrow-to-project))
-      ; Remove the marker
-      (setq current-project nil)
-      (org-agenda-redo)
-      (beginning-of-buffer)
-      (setq num-projects-left (length bh/project-list))
-      (if (> num-projects-left 0)
-          (message "%s projects left to view" num-projects-left)
-        (beginning-of-buffer)
-        (setq bh/hide-scheduled-and-waiting-next-tasks t)
-        (error "All projects viewed.")))))
-
-(add-hook 'org-agenda-mode-hook
-          '(lambda () (org-defkey org-agenda-mode-map "V" 'bh/view-next-project))
-          'append)
-
-(add-hook 'org-agenda-mode-hook
-          '(lambda () (org-defkey org-agenda-mode-map "\C-c\C-x<" 'bh/set-agenda-restriction-lock))
-          'append)
-
-(defun bh/set-agenda-restriction-lock (arg)
-  "Set restriction lock to current task subtree or file if prefix is specified"
-  (interactive "p")
-  (let* ((pom (bh/get-pom-from-agenda-restriction-or-point))
-         (tags (org-with-point-at pom (org-get-tags-at))))
-    (let ((restriction-type (if (equal arg 4) 'file 'subtree)))
-      (save-restriction
-        (cond
-         ((and (equal major-mode 'org-agenda-mode) pom)
-          (org-with-point-at pom
-            (org-agenda-set-restriction-lock restriction-type))
-          (org-agenda-redo))
-         ((and (equal major-mode 'org-mode) (org-before-first-heading-p))
-          (org-agenda-set-restriction-lock 'file))
-         (pom
-          (org-with-point-at pom
-            (org-agenda-set-restriction-lock restriction-type))))))))
 
 ;; Limit restriction lock highlighting to the headline only
 (setq org-agenda-restriction-lock-highlight-subtree nil)
@@ -692,36 +291,9 @@ so change the default 'F' binding in the agenda to allow both"
 (setq org-log-state-notes-insert-after-drawers nil)
 (setq org-todo-keywords
       (quote ((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)")
-              (sequence "WAITING(w@/!)" "HOLD(h@/!)" "|" "CANCELLED(c@/!)" "PHONE" "MEETING"))))
-
-; Enable habit tracking (and a bunch of other modules)
-(setq org-modules (quote (org-bbdb
-                          org-bibtex
-                          org-crypt
-                          org-gnus
-                          org-id
-                          org-info
-                          org-jsinfo
-                          org-habit
-                          org-inlinetask
-                          org-irc
-                          org-mew
-                          org-mhe
-                          org-protocol
-                          org-rmail
-                          org-vm
-                          org-wl
-                          org-w3m)))
-
+              (sequence "WAITING(w@/!)" "HOLD(h@/!)" "|" "CANCELLED(c@/!)" "MEETING"))))
 
 (global-auto-revert-mode t)
-
-(defun bh/show-org-agenda ()
-  (interactive)
-  (if org-agenda-sticky
-      (switch-to-buffer "*Org Agenda( )*")
-    (switch-to-buffer "*Org Agenda*"))
-  (delete-other-windows))
 
 (require 'org-protocol)
 
@@ -776,16 +348,6 @@ so change the default 'F' binding in the agenda to allow both"
               ("A" "#+ascii: ")
               ("i" "#+index: ?" "#+index: ?")
               ("I" "#+include %file ?" "<include file=%file markup=\"?\">"))))
-(defun bh/mark-next-parent-tasks-todo ()
-  "Visit each parent task and change NEXT states to TODO"
-  (let ((mystate (or (and (fboundp 'org-state)
-                          state)
-                     (nth 2 (org-heading-components)))))
-    (when mystate
-      (save-excursion
-        (while (org-up-heading-safe)
-          (when (member (nth 2 (org-heading-components)) (list "NEXT"))
-            (org-todo "TODO")))))))
 
 (setq org-src-preserve-indentation nil)
 (setq org-edit-src-content-indentation 0)
