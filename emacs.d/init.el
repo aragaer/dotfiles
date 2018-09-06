@@ -49,6 +49,12 @@
   :custom-face
   (org-mode-line-clock ((t (:background "grey75" :foreground "red" :box (:line-width -1 :style released-button))))))
 
+(use-package projectile
+  :ensure t
+  :config
+  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+  (projectile-mode +1))
+
 (use-package wc-mode
   :ensure t
   :custom
@@ -86,7 +92,7 @@
  '(inhibit-startup-screen t)
  '(package-selected-packages
    (quote
-    (slime wc-mode use-package reverse-im org-plus-contrib olivetti feature-mode evil))))
+    (projectile slime wc-mode use-package reverse-im org-plus-contrib olivetti feature-mode evil))))
 
 (modify-syntax-entry ?_ "w")
 
