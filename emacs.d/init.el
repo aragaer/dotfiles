@@ -140,3 +140,5 @@
   :ensure t
   :config
   (setq inferior-lisp-program "/usr/bin/sbcl"))
+
+(rassq-delete-all 'change-log-mode auto-mode-alist)
