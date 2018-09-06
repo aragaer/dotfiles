@@ -3,7 +3,7 @@
 (setq package-archives
       '(("gnu" . "http://elpa.gnu.org/packages/")
 	("marmalade" . "https://marmalade-repo.org/packages/")
-	("melpa" . "http://melpa.milkbox.net/packages/")
+	("melpa" . "http://melpa.org/packages/")
 	("org" . "http://orgmode.org/elpa/")
 	("melpa-stable" . "http://stable.melpa.org/packages/")))
 
@@ -105,7 +105,6 @@
 (add-text-properties (point-min) (point-max)
 		     '(line-spacing 0.25 line-height 1.25))
 
-(load "~/.emacs.d/norang-org")
 (put 'narrow-to-region 'disabled nil)
 (put 'narrow-to-page 'disabled nil)
 
