@@ -24,6 +24,7 @@
   :ensure t
   :config
   (evil-mode)
+  (fset 'evil-visual-update-x-selection 'ignore)
   :custom
   (evil-search-module (quote evil-search)))
 
@@ -83,13 +84,14 @@
 
 (setq show-trailing-whitespace t)
 (setq ac-auto-show-menu 0.3)
-(setq browse-url-browser-function 'browse-url-generic browse-url-generic-program "luakit")
+(setq browse-url-browser-function 'browse-url-generic browse-url-generic-program "google-chrome-stable")
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(inhibit-startup-screen t)
+ '(initial-scratch-message nil)
  '(package-selected-packages
    (quote
     (projectile slime wc-mode use-package reverse-im org-plus-contrib olivetti feature-mode evil))))
@@ -107,7 +109,7 @@
   (olivetti-mode t)
   (wc-mode t))
 
-(add-to-list 'default-frame-alist '(font . "freemono-12"))
+(add-to-list 'default-frame-alist '(font . "monospace-12"))
 (add-text-properties (point-min) (point-max)
 		     '(line-spacing 0.25 line-height 1.25))
 
@@ -138,6 +140,8 @@
 
 (use-package slime
   :ensure t
+  :init
+  (load (expand-file-name "~/quicklisp/slime-helper.el"))
   :config
   (setq inferior-lisp-program "/usr/bin/sbcl"))
 
