@@ -34,6 +34,11 @@
 (use-package feature-mode
   :ensure t)
 
+(use-package ivy
+  :ensure t
+  :config
+  (ivy-mode t))
+
 (use-package reverse-im
   :ensure t
   :config
@@ -47,13 +52,19 @@
   :mode ("\\.\\(org\\|org_archive\\|txt\\)$" . org-mode)
   :custom
   (org-agenda-files nil)
+  (org-confirm-babel-evaluate nil)
+  (org-startup-indented t)
+  (org-hide-leading-stars nil)
   :custom-face
   (org-mode-line-clock ((t (:background "grey75" :foreground "red" :box (:line-width -1 :style released-button))))))
 
 (use-package projectile
   :ensure t
+  :custom
+  (projectile-completion-system 'ivy)
   :config
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+  (add-to-list 'projectile-globally-ignored-directories ".venv")
   (projectile-mode +1))
 
 (use-package wc-mode
@@ -94,7 +105,7 @@
  '(initial-scratch-message nil)
  '(package-selected-packages
    (quote
-    (projectile slime wc-mode use-package reverse-im org-plus-contrib olivetti feature-mode evil))))
+    (ivy projectile slime wc-mode use-package reverse-im org-plus-contrib olivetti feature-mode evil))))
 
 (modify-syntax-entry ?_ "w")
 
