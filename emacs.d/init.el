@@ -15,6 +15,8 @@
 
 (require 'use-package)
 
+(setf custom-file (locate-user-emacs-file "custom.el"))
+
 ;; I can't properly use emacs without evil.
 (use-package evil
   :ensure t
@@ -100,17 +102,6 @@
 (setq show-trailing-whitespace t)
 (setq ac-auto-show-menu 0.3)
 (setq browse-url-browser-function 'browse-url-generic browse-url-generic-program "google-chrome-stable")
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(inhibit-startup-screen t)
- '(initial-scratch-message nil)
- '(package-selected-packages
-   (quote
-    (ivy projectile slime wc-mode use-package reverse-im org-plus-contrib olivetti feature-mode evil))))
-
 (modify-syntax-entry ?_ "w")
 
 (setq backup-directory-alist
@@ -131,6 +122,9 @@
 (put 'narrow-to-region 'disabled nil)
 (put 'narrow-to-page 'disabled nil)
 
+ (setq inhibit-startup-screen t)
+ (setq initial-scratch-message nil)
+
 (let ((local-settings-file (locate-user-emacs-file "local_settings.el")))
   (if (file-exists-p local-settings-file)
       (load local-settings-file)))
@@ -146,12 +140,6 @@
       (if (> 2 (point-max-marker))
 	  (insert header))
       (narrow-to-region (1+ (length header)) (point-max-marker)))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(org-mode-line-clock ((t (:background "grey75" :foreground "red" :box (:line-width -1 :style released-button))))))
 
 (use-package slime
   :ensure t
@@ -161,3 +149,5 @@
   (setq inferior-lisp-program "/usr/bin/sbcl"))
 
 (rassq-delete-all 'change-log-mode auto-mode-alist)
+
+(load custom-file)
