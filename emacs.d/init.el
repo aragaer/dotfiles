@@ -7,10 +7,6 @@
 	("org" . "http://orgmode.org/elpa/")
 	("melpa-stable" . "http://stable.melpa.org/packages/")))
 
-(when (< emacs-major-version 24)
-  ;; For important compatibility libraries like cl-lib
-  (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/")))
-
 (package-initialize)
 
 (when (not (package-installed-p 'use-package))
