@@ -24,6 +24,14 @@
   :custom
   (evil-search-module (quote evil-search)))
 
+(use-package vdiff
+  :ensure t
+  :custom
+  (vdiff-truncate-lines t)
+  :config
+  (define-key vdiff-mode-map (kbd "C-c") vdiff-mode-prefix-map)
+  (evil-define-key 'normal vdiff-mode-map "," vdiff-mode-prefix-map))
+
 (use-package olivetti
   :ensure t)
 
