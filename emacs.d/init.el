@@ -15,7 +15,12 @@
 
 (require 'use-package)
 
-(setf custom-file (locate-user-emacs-file "custom.el"))
+(use-package cus-edit
+  :after files
+  :config
+  (setf custom-file (locate-user-emacs-file "custom.el"))
+  (add-hook 'after-init-hook
+	    (lambda () (load custom-file t))))
 
 ;; I can't properly use emacs without evil.
 (use-package evil
@@ -53,8 +58,7 @@
 (use-package org
   :ensure org-plus-contrib
   :bind (("\C-cl" . org-store-link)
-	 ("\C-ca" . org-agenda)
-	 ("\C-cb" . org-iswitchb))
+	 ("\C-ca" . org-agenda))
   :mode ("\\.\\(org\\|org_archive\\|txt\\)$" . org-mode)
   :custom
   (org-confirm-babel-evaluate nil)
@@ -81,22 +85,22 @@
   :custom
   (wc-modeline-format "%tw"))
 
-(use-package files)
+(use-package files
+  :custom
+  (backup-directory-alist
+   `(("." . ,(locate-user-emacs-file "backups"))))
+  (auto-save-file-name-transforms
+   `((".*" ,(locate-user-emacs-file "backups") t)))
+  (auto-save-list-file-prefix
+   (locate-user-emacs-file "backups/")))
 
 (tool-bar-mode -1)
 (menu-bar-mode -1)
+(setq indent-tabs-mode nil)
 
-(defun set-indentation ()
-  "4 spaces per tab"
-  (setq indent-tabs-mode nil)
-  (setq tab-width 4))
-
-(add-hook 'java-mode-hook 'auto-revert-mode)
-(add-hook 'java-mode-hook 'set-indentation)
-
-(add-hook 'python-mode-hook 'set-indentation)
-
-(add-hook 'go-mode-hook '(lambda () (setq tab-width 4)))
+(add-hook 'go-mode-hook '(lambda ()
+			   (setq indent-tabs-mode t)
+			   (setq tab-width 4)))
 
 (add-to-list 'auto-mode-alist '("\\.m$" . octave-mode))
 
@@ -106,13 +110,6 @@
 (setq ac-auto-show-menu 0.3)
 (setq browse-url-browser-function 'browse-url-generic browse-url-generic-program "google-chrome-stable")
 (modify-syntax-entry ?_ "w")
-
-(setq backup-directory-alist
-      `(("." . ,(locate-user-emacs-file "backups"))))
-(setq auto-save-file-name-transforms
-      `((".*" ,(locate-user-emacs-file "backups") t)))
-(setq auto-save-list-file-prefix
-      (locate-user-emacs-file "backups/"))
 
 (define-derived-mode my-writing-mode org-mode "my-writing"
   (olivetti-mode t)
@@ -159,5 +156,3 @@
 (require 'org-subtask-reset)
 
 (global-auto-revert-mode t)
-
-(load custom-file)
