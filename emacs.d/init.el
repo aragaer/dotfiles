@@ -57,10 +57,13 @@
 	 ("\C-cb" . org-iswitchb))
   :mode ("\\.\\(org\\|org_archive\\|txt\\)$" . org-mode)
   :custom
-  (org-agenda-files nil)
   (org-confirm-babel-evaluate nil)
   (org-startup-indented t)
   (org-hide-leading-stars nil)
+  (org-enforce-todo-dependencies t)
+  (org-agenda-todo-list-sublevels nil)
+  (org-log-repeat nil)
+  (org-extend-today-until 3)
   :custom-face
   (org-mode-line-clock ((t (:background "grey75" :foreground "red" :box (:line-width -1 :style released-button))))))
 
@@ -149,5 +152,10 @@
   (setq inferior-lisp-program "/usr/bin/sbcl"))
 
 (rassq-delete-all 'change-log-mode auto-mode-alist)
+
+(load (locate-user-emacs-file "org-subtask-reset.el"))
+(require 'org-subtask-reset)
+
+(global-auto-revert-mode t)
 
 (load custom-file)
