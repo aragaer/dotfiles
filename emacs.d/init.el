@@ -144,12 +144,14 @@
 	  (insert header))
       (narrow-to-region (1+ (length header)) (point-max-marker)))))
 
-(use-package slime
-  :ensure t
-  :init
-  (load (expand-file-name "~/quicklisp/slime-helper.el"))
-  :config
-  (setq inferior-lisp-program "/usr/bin/sbcl"))
+(let ((slime-helper-file (expand-file-name "~/quicklisp/slime-helper.el")))
+  (if (file-exists-p slime-helper-file)
+      (use-package slime
+	:ensure t
+	:init
+	(load slime-helper-file)
+	:config
+	(setq inferior-lisp-program "/usr/bin/sbcl"))))
 
 (rassq-delete-all 'change-log-mode auto-mode-alist)
 
