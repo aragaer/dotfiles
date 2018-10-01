@@ -117,7 +117,8 @@
 
 (define-derived-mode my-writing-mode org-mode "my-writing"
   (olivetti-mode t)
-  (wc-mode t))
+  (wc-mode t)
+  (setq olivetti-body-width 80))
 
 (add-to-list 'default-frame-alist '(font . "monospace-12"))
 (add-text-properties (point-min) (point-max)
