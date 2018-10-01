@@ -68,6 +68,10 @@
   (org-agenda-todo-list-sublevels nil)
   (org-log-repeat nil)
   (org-extend-today-until 3)
+  (org-agenda-custom-commands
+   (quote
+    (("d" "Undated tasks" alltodo ""
+      ((org-agenda-todo-ignore-with-date t))))))
   :custom-face
   (org-mode-line-clock ((t (:background "grey75" :foreground "red" :box (:line-width -1 :style released-button))))))
 
