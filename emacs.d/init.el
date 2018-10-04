@@ -68,6 +68,7 @@
   (org-agenda-todo-list-sublevels nil)
   (org-log-repeat nil)
   (org-extend-today-until 3)
+  (org-agenda-span 1)
   (org-agenda-custom-commands
    (quote
     (("d" "Undated tasks" alltodo ""
