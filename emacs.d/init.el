@@ -88,7 +88,7 @@
 (use-package wc-mode
   :ensure t
   :custom
-  (wc-modeline-format "%tw"))
+  (wc-modeline-format "%tw "))
 
 (use-package files
   :custom
@@ -117,9 +117,9 @@
 (modify-syntax-entry ?_ "w")
 
 (define-derived-mode my-writing-mode org-mode "my-writing"
+  (setq olivetti-body-width 80)
   (olivetti-mode t)
-  (wc-mode t)
-  (setq olivetti-body-width 80))
+  (wc-mode t))
 
 (add-to-list 'default-frame-alist '(font . "monospace-12"))
 (add-text-properties (point-min) (point-max)
