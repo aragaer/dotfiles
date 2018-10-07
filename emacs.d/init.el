@@ -76,6 +76,11 @@
   :custom-face
   (org-mode-line-clock ((t (:background "grey75" :foreground "red" :box (:line-width -1 :style released-button))))))
 
+(setq org-todo-keyword-faces
+      '(("FAILED" . org-warning)
+	("PLANNED" . "#806000")
+	("CANCELLED" . "#101080")))
+
 (use-package projectile
   :ensure t
   :custom
