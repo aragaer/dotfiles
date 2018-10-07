@@ -167,3 +167,5 @@
 (require 'org-subtask-reset)
 
 (global-auto-revert-mode t)
+
+(load (locate-user-emacs-file "agile-results.el"))
