@@ -21,8 +21,9 @@ defaults = defaultConfig {
     modMask = mod4Mask, -- use the Windows button as mod
     terminal = "urxvt",
     manageHook = composeAll [
-		 	    className =? "mpv" --> doFloat,
-    	       	 	    manageDocks,
+			    className =? "mpv" --> doFloat,
+			    className =? "obs" --> doShift "9",
+			    manageDocks,
 			    isFullscreen --> doFullFloat,
 			    manageHook defaultConfig],
     layoutHook = avoidStruts $ smartBorders $ minimize $ boringWindows $ layoutHook desktopConfig,

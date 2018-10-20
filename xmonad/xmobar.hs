@@ -10,8 +10,9 @@ Config {
         ,Run BatteryN ["BAT0"] ["-t", "<left>% <timeleft>"] 60 "battery"
         ,Run StdinReader
         ,Run CommandReader "~/Projects/pymodoro/pymodoro.py" "pomodoro"
+        ,Run CommandReader "~/.local/bin/obs-status" "rec"
     ],
     sepChar = "%",
     alignSep = "}{",
-    template = "%StdinReader% }{ %pomodoro% | %battery% | %kbd% | <fc=#FFFFCC>%date%</fc>   "
+    template = "%StdinReader% }{ %rec% | %pomodoro% | %battery% | %kbd% | <fc=#FFFFCC>%date%</fc>   "
 }
