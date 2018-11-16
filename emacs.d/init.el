@@ -61,19 +61,26 @@
          ("\C-ca" . org-agenda))
   :mode ("\\.\\(org\\|org_archive\\|txt\\)$" . org-mode)
   :custom
-  (org-confirm-babel-evaluate nil)
-  (org-startup-indented t)
-  (org-hide-leading-stars nil)
-  (org-enforce-todo-dependencies t)
-  (org-agenda-todo-list-sublevels nil)
-  (org-log-repeat nil)
-  (org-extend-today-until 3)
   (org-agenda-span 1)
+  (org-agenda-todo-list-sublevels nil)
   (org-blank-before-new-entry '((heading . nil) (plain-list-item . nil)))
+  (org-confirm-babel-evaluate nil)
+  (org-enforce-todo-dependencies t)
+  (org-extend-today-until 3)
+  (org-hide-leading-stars nil)
+  (org-log-into-drawer "LOGBOOK")
+  (org-log-repeat nil)
+  (org-outline-path-complete-in-steps nil)
+  (org-refile-use-outline-path 'file)
+  (org-sort-agenda-notime-is-late nil)
+  (org-startup-indented t)
   (org-agenda-custom-commands
    (quote
     (("d" "Undated tasks" alltodo ""
       ((org-agenda-todo-ignore-with-date t))))))
+  (org-refile-targets
+   '((nil :maxlevel . 3)
+     (org-agenda-files :maxlevel . 3)))
   :custom-face
   (org-mode-line-clock ((t (:background "grey75" :foreground "red" :box (:line-width -1 :style released-button))))))
 
