@@ -2,10 +2,10 @@
 
 (setq package-archives
       '(("gnu" . "http://elpa.gnu.org/packages/")
-	("marmalade" . "https://marmalade-repo.org/packages/")
-	("melpa" . "http://melpa.org/packages/")
-	("org" . "http://orgmode.org/elpa/")
-	("melpa-stable" . "http://stable.melpa.org/packages/")))
+        ("marmalade" . "https://marmalade-repo.org/packages/")
+        ("melpa" . "http://melpa.org/packages/")
+        ("org" . "http://orgmode.org/elpa/")
+        ("melpa-stable" . "http://stable.melpa.org/packages/")))
 
 (package-initialize)
 
@@ -20,7 +20,7 @@
   :config
   (setf custom-file (locate-user-emacs-file "custom.el"))
   (add-hook 'after-init-hook
-	    (lambda () (load custom-file t))))
+            (lambda () (load custom-file t))))
 
 ;; I can't properly use emacs without evil.
 (use-package evil
@@ -58,7 +58,7 @@
 (use-package org
   :ensure org-plus-contrib
   :bind (("\C-cl" . org-store-link)
-	 ("\C-ca" . org-agenda))
+         ("\C-ca" . org-agenda))
   :mode ("\\.\\(org\\|org_archive\\|txt\\)$" . org-mode)
   :custom
   (org-confirm-babel-evaluate nil)
@@ -79,8 +79,8 @@
 
 (setq org-todo-keyword-faces
       '(("FAILED" . org-warning)
-	("PLANNED" . "#806000")
-	("CANCELLED" . "#101080")))
+        ("PLANNED" . "#806000")
+        ("CANCELLED" . "#101080")))
 
 (use-package projectile
   :ensure t
@@ -107,11 +107,13 @@
 
 (tool-bar-mode -1)
 (menu-bar-mode -1)
-(setq indent-tabs-mode nil)
+(setq-default indent-tabs-mode nil)
+(setq whitespace-style '(face tabs tab-mark trailing))
+(global-whitespace-mode)
 
 (add-hook 'go-mode-hook '(lambda ()
-			   (setq indent-tabs-mode t)
-			   (setq tab-width 4)))
+                           (setq indent-tabs-mode t)
+                           (setq tab-width 4)))
 
 (add-to-list 'auto-mode-alist '("\\.m$" . octave-mode))
 
@@ -129,13 +131,13 @@
 
 (add-to-list 'default-frame-alist '(font . "monospace-12"))
 (add-text-properties (point-min) (point-max)
-		     '(line-spacing 0.25 line-height 1.25))
+                     '(line-spacing 0.25 line-height 1.25))
 
 (put 'narrow-to-region 'disabled nil)
 (put 'narrow-to-page 'disabled nil)
 
- (setq inhibit-startup-screen t)
- (setq initial-scratch-message nil)
+(setq inhibit-startup-screen t)
+(setq initial-scratch-message nil)
 
 (let ((local-settings-file (locate-user-emacs-file "local_settings.el")))
   (if (file-exists-p local-settings-file)
@@ -145,22 +147,22 @@
   (interactive)
   (let ((header "#-*- Mode: my-writing -*-\n"))
     (with-current-buffer
-	(find-file
-	 (concat *daily-page-dir*
-	  (format-time-string "%Y-%m-%d.txt" (current-time))))
+        (find-file
+         (concat *daily-page-dir*
+                 (format-time-string "%Y-%m-%d.txt" (current-time))))
       (my-writing-mode)
       (if (> 2 (point-max-marker))
-	  (insert header))
+          (insert header))
       (narrow-to-region (1+ (length header)) (point-max-marker)))))
 
 (let ((slime-helper-file (expand-file-name "~/quicklisp/slime-helper.el")))
   (if (file-exists-p slime-helper-file)
       (use-package slime
-	:ensure t
-	:init
-	(load slime-helper-file)
-	:config
-	(setq inferior-lisp-program "/usr/bin/sbcl"))))
+        :ensure t
+        :init
+        (load slime-helper-file)
+        :config
+        (setq inferior-lisp-program "/usr/bin/sbcl"))))
 
 (rassq-delete-all 'change-log-mode auto-mode-alist)
 
