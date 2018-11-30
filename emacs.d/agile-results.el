@@ -11,16 +11,22 @@
     (search-forward "*") (backward-char)
     (org-insert-heading) (insert hd)))
 
-(add-to-list 'org-capture-templates '("a" "Agile results templates"))
-(add-to-list 'org-capture-templates '("am" "Monday Vision" entry (file+function
-                                                                  *my-agile-results-file*
-                                                                  agile-result-goto-week)
-                                      (file "~/Dropbox/org/templates/monday-vision.org")))
-(add-to-list 'org-capture-templates '("ad" "Daily Outcomes" entry (file+function
-                                                                   *my-agile-results-file*
-                                                                   agile-result-goto-week)
-                                      (file "~/Dropbox/org/templates/daily-outcomes.org")))
-(add-to-list 'org-capture-templates '("af" "Friday Reflection" entry (file+function
-                                                                      *my-agile-results-file*
-                                                                      agile-result-goto-week)
-                                      (file "~/Dropbox/org/templates/friday-reflection.org")))
+(defun add-agile-result-templates()
+  (add-to-list 'org-capture-templates '("a" "Agile results templates"))
+  (add-to-list 'org-capture-templates '("am" "Monday Vision" entry (file+function
+                                                                    *my-agile-results-file*
+                                                                    agile-result-goto-week)
+                                        (file "~/Dropbox/org/templates/monday-vision.org")
+                                        :unnarrowed t))
+  (add-to-list 'org-capture-templates '("ad" "Daily Outcomes" entry (file+function
+                                                                     *my-agile-results-file*
+                                                                     agile-result-goto-week)
+                                        (file "~/Dropbox/org/templates/daily-outcomes.org")
+                                        :unnarrowed t))
+  (add-to-list 'org-capture-templates '("af" "Friday Reflection" entry (file+function
+                                                                        *my-agile-results-file*
+                                                                        agile-result-goto-week)
+                                        (file "~/Dropbox/org/templates/friday-reflection.org")
+                                        :unnarrowed t)))
+
+(add-agile-result-templates)

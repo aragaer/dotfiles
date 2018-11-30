@@ -80,12 +80,21 @@
    (quote
     (("d" "Undated tasks" alltodo ""
       ((org-agenda-todo-ignore-with-date t))))))
-  (org-capture-templates nil)
+  (org-capture-templates
+   '(("h" "Add Hledger entry"
+      plain (file (lambda ()
+                    (concat *hledger-dir*
+                            (format-time-string "%Y/%m.journal" (current-time)))))
+      "%<%Y-%m-%d> %^{entry title}\n %?"
+      :empty-lines 1
+      :unnarrowed t)))
   (org-refile-targets
    '((nil :maxlevel . 3)
      (org-agenda-files :maxlevel . 3)))
   :custom-face
   (org-mode-line-clock ((t (:background "grey75" :foreground "red" :box (:line-width -1 :style released-button))))))
+
+(add-hook 'org-capture-mode-hook 'evil-insert-state)
 
 (setq org-todo-keyword-faces
       '(("FAILED" . org-warning)
