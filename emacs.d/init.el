@@ -87,7 +87,11 @@
                             (format-time-string "%Y/%m.journal" (current-time)))))
       "%<%Y-%m-%d> %^{entry title}\n %?"
       :empty-lines 1
-      :unnarrowed t)))
+      :unnarrowed t)
+     ("r" "Read later")
+     ("rw" "Web page"
+      entry (file"~/Dropbox/org/review.org")
+      "* READ [[%x][%?]]\nSCHEDULED:%^t")))
   (org-refile-targets
    '((nil :maxlevel . 3)
      (org-agenda-files :maxlevel . 3)))
