@@ -1,58 +1,26 @@
-(defun insert-3-planned-items ()
-  (org-insert-heading) (insert "PLANNED") (org-do-demote)
-  (org-insert-heading) (insert "PLANNED")
-  (org-insert-heading) (insert "PLANNED")
-  (forward-line -2) (end-of-line))
+(defconst *my-agile-results-file* "~/Dropbox/org/agile-results.org")
 
-(defun monday-vision ()
-  (interactive)
-  (let ((file (cl-first (remove-if-not
-                         (lambda (entry)
-                           (string-match "agile-results" entry))
-                         org-agenda-files)))
-        (entry (format-time-string "Week %W (%Y)" (current-time)))
-        (org-link-search-must-match-exact-headline t))
-    (condition-case nil
-        (org-open-link-from-string (format "[[file:%s::*%s]]" file entry))
-      (error
-       (with-current-buffer
-           (find-file file)
-                                        ; before first heading
-         (goto-char 0) (search-forward "*") (backward-char)
-         (org-insert-heading) (insert entry)
-         (org-insert-heading) (insert "Monday vision") (org-do-demote)
-         (insert-3-planned-items))))))
+(defun agile-result-goto-week ()
+  (setq hd (format-time-string "Week %W (%Y)" (current-time)))
+  (goto-char (point-min))
+  (if (re-search-forward
+       (format org-complex-heading-regexp-format (regexp-quote hd))
+       nil t)
+      (goto-char (point-at-bol))
+    (goto-char (point-min))
+    (search-forward "*") (backward-char)
+    (org-insert-heading) (insert hd)))
 
-(defun daily-outcomes ()
-  (interactive)
-  (let ((file (cl-first (remove-if-not
-                         (lambda (entry)
-                           (string-match "agile-results" entry))
-                         org-agenda-files)))
-        (entry (format-time-string "Week %W (%Y)" (current-time)))
-        (org-link-search-must-match-exact-headline t))
-    (with-current-buffer
-        (find-file file)
-      (org-open-link-from-string (format "[[*%s]]" entry))
-      (org-insert-heading-respect-content)
-      (insert (format-time-string "Daily outcomes for %A" (current-time)))
-      (org-do-demote)
-      (insert-3-planned-items))))
-
-(defun friday-reflection ()
-  (interactive)
-  (let ((file (cl-first (remove-if-not
-                         (lambda (entry)
-                           (string-match "agile-results" entry))
-                         (org-agenda-files))))
-        (entry (format-time-string "Week %W (%Y)" (current-time)))
-        (org-link-search-must-match-exact-headline t))
-    (with-current-buffer
-        (find-file file)
-      (org-open-link-from-string (format "[[*%s]]" entry))
-      (org-insert-heading-respect-content)
-      (insert "Friday reflection") (org-do-demote)
-      (org-insert-heading) (insert "Что не сделал") (org-do-demote)
-      (org-insert-heading) (insert "Что хорошо получилось")
-      (org-insert-heading) (insert "Что можно было сделать лучше")
-      (org-insert-heading) (insert "Мое состояние"))))
+(add-to-list 'org-capture-templates '("a" "Agile results templates"))
+(add-to-list 'org-capture-templates '("am" "Monday Vision" entry (file+function
+                                                                  *my-agile-results-file*
+                                                                  agile-result-goto-week)
+                                      (file "~/Dropbox/org/templates/monday-vision.org")))
+(add-to-list 'org-capture-templates '("ad" "Daily Outcomes" entry (file+function
+                                                                   *my-agile-results-file*
+                                                                   agile-result-goto-week)
+                                      (file "~/Dropbox/org/templates/daily-outcomes.org")))
+(add-to-list 'org-capture-templates '("af" "Friday Reflection" entry (file+function
+                                                                      *my-agile-results-file*
+                                                                      agile-result-goto-week)
+                                      (file "~/Dropbox/org/templates/friday-reflection.org")))

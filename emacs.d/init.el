@@ -55,13 +55,6 @@
   :config
   (reverse-im-activate "russian-computer"))
 
-(defconst *my-agile-results-file* "~/Dropbox/org/agile-results.org")
-
-(defun agile-result-goto-week ()
-  (org-capture-put :target (list 'file+headline *my-agile-results-file*
-                                 (format-time-string "Week %W (%Y)" (current-time))))
-  (org-capture-set-target-location))
-
 (use-package org
   :ensure org-plus-contrib
   :bind (("\C-cl" . org-store-link)
@@ -87,22 +80,12 @@
    (quote
     (("d" "Undated tasks" alltodo ""
       ((org-agenda-todo-ignore-with-date t))))))
+  (org-capture-templates nil)
   (org-refile-targets
    '((nil :maxlevel . 3)
      (org-agenda-files :maxlevel . 3)))
   :custom-face
   (org-mode-line-clock ((t (:background "grey75" :foreground "red" :box (:line-width -1 :style released-button))))))
-
-(setq org-capture-templates
-      '(("a" "Agile results templates")
-        ("am" "Monday Vision" entry (file+function
-                                     *my-agile-results-file*
-                                     agile-result-goto-week)
-         (file "~/Dropbox/org/templates/monday-vision.org"))
-        ("ad" "Daily Outcomes" entry (file+function
-                                      *my-agile-results-file*
-                                      agile-result-goto-week)
-         (file "~/Dropbox/org/templates/daily-outcomes.org"))))
 
 (setq org-todo-keyword-faces
       '(("FAILED" . org-warning)
