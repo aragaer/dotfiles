@@ -114,7 +114,9 @@
 (setq org-todo-keyword-faces
       '(("FAILED" . org-warning)
         ("PLANNED" . "#806000")
-        ("CANCELLED" . "#101080")))
+	("MEETING" . "#806000")
+	("PROJ" . "#101080")
+	("CANCELLED" . "#101080")))
 
 (use-package projectile
   :ensure t
