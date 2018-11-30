@@ -21,11 +21,11 @@ defaults = defaultConfig {
     modMask = mod4Mask, -- use the Windows button as mod
     terminal = "urxvt",
     manageHook = composeAll [
-			    className =? "mpv" --> doFloat,
-			    className =? "obs" --> doShift "9",
-			    manageDocks,
-			    isFullscreen --> doFullFloat,
-			    manageHook defaultConfig],
+                            className =? "mpv" --> doFloat,
+                            className =? "obs" --> doShift "9",
+                            manageDocks,
+                            isFullscreen --> doFullFloat,
+                            manageHook defaultConfig],
     layoutHook = avoidStruts $ smartBorders $ minimize $ boringWindows $ layoutHook desktopConfig,
     handleEventHook    = fullscreenEventHook,
     startupHook = setWMName "LG3D"
@@ -37,11 +37,12 @@ myKeys = [
           ((mod4Mask, xK_apostrophe), sendMessage ToggleStruts),
           ((mod4Mask, xK_Tab), focusDown),
           ((mod4Mask .|. shiftMask, xK_Tab), focusUp),
+          ((mod4Mask .|. shiftMask, xK_p), spawn "~/Projects/pa-client/input.py"),
           ((mod4Mask, xK_w), spawn "~/Projects/wall-changer/main.py"),
           ((mod4Mask .|. shiftMask, xK_w), spawn "~/Projects/wall-changer/main.py -c"),
           ((mod4Mask, xK_n), spawn "touch ~/.pomodoro_session"),
           ((mod4Mask .|. shiftMask, xK_n), spawn "rm ~/.pomodoro_session")
-	 ]
+         ]
 
 main = do
     xmproc <- spawnPipe "/usr/bin/xmobar ~/.xmonad/xmobar.hs"
@@ -59,7 +60,7 @@ main = do
               "Spacing 6 Full"                        -> "[ ]"
               _                                       -> x )
           , ppHiddenNoWindows = showNamedWorkspaces
-      } 
+      }
 } where showNamedWorkspaces wsId = if any (`elem` wsId) ['a'..'z']
                                        then pad wsId
                                        else ""
