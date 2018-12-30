@@ -37,6 +37,7 @@ myKeys = [
           ((mod4Mask, xK_apostrophe), sendMessage ToggleStruts),
           ((mod4Mask, xK_Tab), focusDown),
           ((mod4Mask .|. shiftMask, xK_Tab), focusUp),
+          ((mod4Mask .|. controlMask, xK_p), spawn "passmenu"),
           ((mod4Mask .|. shiftMask, xK_p), spawn "~/Projects/pa-client/input.py"),
           ((mod4Mask, xK_w), spawn "~/Projects/wall-changer/main.py"),
           ((mod4Mask .|. shiftMask, xK_w), spawn "~/Projects/wall-changer/main.py -c"),
