@@ -63,6 +63,8 @@
   :config
   (global-set-key "\C-cc" 'org-capture)
   :custom
+  (org-agenda-dim-blocked-tasks t)
+  (org-agenda-files (locate-user-emacs-file "agenda.list"))
   (org-agenda-span 1)
   (org-agenda-todo-list-sublevels nil)
   (org-blank-before-new-entry '((heading . nil) (plain-list-item . nil)))
@@ -76,6 +78,7 @@
   (org-refile-use-outline-path 'file)
   (org-sort-agenda-notime-is-late nil)
   (org-startup-indented t)
+  (org-archive-location "archive/%s::")
   (org-agenda-custom-commands
    (quote
     (("d" "Undated tasks" alltodo ""
@@ -90,8 +93,18 @@
       :unnarrowed t)
      ("r" "Read later")
      ("rw" "Web page"
-      entry (file"~/Dropbox/org/review.org")
-      "* READ [[%x][%?]]\nSCHEDULED:%^t")))
+      entry (file "~/Dropbox/org/review.org")
+      "* READ [[%x][%?]]\nSCHEDULED:%^t")
+     ("t" "todo")
+     ("tm" "must"
+      entry (file+headline "~/Dropbox/org/agile-actions.org" "Must")
+      "* TODO %^{what}\nSCHEDULED:%^t%?")
+     ("ts" "should"
+      entry (file+headline "~/Dropbox/org/agile-actions.org" "Should")
+      "* TODO %^{what}\nSCHEDULED:%^t%?")
+     ("tc" "could"
+      entry (file+headline "~/Dropbox/org/agile-actions.org" "Could")
+      "* TODO %^{what}\nSCHEDULED:%^t%?")))
   (org-refile-targets
    '((nil :maxlevel . 3)
      (org-agenda-files :maxlevel . 3)))
@@ -111,12 +124,16 @@
   (require 'evil-org-agenda)
   (evil-org-agenda-set-keys))
 
+(use-package ox-slimhtml
+  :ensure t
+  :after org)
+
 (setq org-todo-keyword-faces
       '(("FAILED" . org-warning)
         ("PLANNED" . "#806000")
-	("MEETING" . "#806000")
-	("PROJ" . "#101080")
-	("CANCELLED" . "#101080")))
+        ("MEETING" . "#806000")
+        ("PROJ" . "#101080")
+        ("CANCELLED" . "#101080")))
 
 (use-package projectile
   :ensure t
@@ -175,6 +192,9 @@
 (setq inhibit-startup-screen t)
 (setq initial-scratch-message nil)
 
+(require 'epa-file)
+(epa-file-enable)
+
 (let ((local-settings-file (locate-user-emacs-file "local_settings.el")))
   (if (file-exists-p local-settings-file)
       (load local-settings-file)))
@@ -204,7 +224,6 @@
 
 (load (locate-user-emacs-file "org-subtask-reset.el"))
 (require 'org-subtask-reset)
+(require 'org-checklist)
 
 (global-auto-revert-mode t)
-
-(load (locate-user-emacs-file "agile-results.el"))
