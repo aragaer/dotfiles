@@ -104,7 +104,7 @@
       "* TODO %^{what}\nSCHEDULED:%^t%?")
      ("tc" "could"
       entry (file+headline "~/Dropbox/org/agile-actions.org" "Could")
-      "* TODO %^{what}\nSCHEDULED:%^t%?")))
+      "* TODO %^{what}\n%?")))
   (org-refile-targets
    '((nil :maxlevel . 3)
      (org-agenda-files :maxlevel . 3)))
