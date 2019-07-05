@@ -2,6 +2,7 @@ import System.IO
 import XMonad
 import XMonad.Config.Desktop
 import XMonad.Hooks.DynamicLog
+import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.ManageHelpers
 import XMonad.Hooks.SetWMName
@@ -27,7 +28,7 @@ defaults = defaultConfig {
                             isFullscreen --> doFullFloat,
                             manageHook defaultConfig],
     layoutHook = avoidStruts $ smartBorders $ minimize $ boringWindows $ layoutHook desktopConfig,
-    handleEventHook    = fullscreenEventHook,
+    handleEventHook    = XMonad.Layout.Fullscreen.fullscreenEventHook,
     startupHook = setWMName "LG3D"
 } `additionalKeys` myKeys
 
@@ -47,7 +48,7 @@ myKeys = [
 
 main = do
     xmproc <- spawnPipe "/usr/bin/xmobar ~/.xmonad/xmobar.hs"
-    xmonad . docks $ defaults {
+    xmonad . docks $ ewmh $ defaults {
       logHook =  dynamicLogWithPP $ defaultPP {
             ppOutput = System.IO.hPutStrLn xmproc
           , ppTitle = xmobarColor xmobarTitleColor "" . shorten 100

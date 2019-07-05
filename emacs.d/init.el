@@ -62,6 +62,7 @@
   :mode ("\\.\\(org\\|org_archive\\|txt\\)$" . org-mode)
   :config
   (global-set-key "\C-cc" 'org-capture)
+  (add-to-list 'org-modules 'org-habits)
   :custom
   (org-agenda-dim-blocked-tasks t)
   (org-agenda-files (locate-user-emacs-file "agenda.list"))
@@ -144,6 +145,15 @@
   (add-to-list 'projectile-globally-ignored-directories ".venv")
   (projectile-mode +1))
 
+(use-package magit
+  :ensure t
+  :bind (("C-c g" . magit-status))
+  :custom
+  (magit-log-margin '(t age-abbreviated magit-log-margin-width t 7))
+  :init
+  (require 'magit-git)
+  (require 'magit-process))
+
 (use-package wc-mode
   :ensure t
   :custom
@@ -199,6 +209,12 @@
   (if (file-exists-p local-settings-file)
       (load local-settings-file)))
 
+(defun hledger-account-read ()
+  (interactive)
+  (insert (completing-read
+           "account: " (split-string (shell-command-to-string "hledger a") "\n" t)))
+  (insert "  "))
+
 (defun daily-page ()
   (interactive)
   (let ((header "#-*- Mode: my-writing -*-\n"))
@@ -211,14 +227,12 @@
           (insert header))
       (narrow-to-region (1+ (length header)) (point-max-marker)))))
 
-(let ((slime-helper-file (expand-file-name "~/quicklisp/slime-helper.el")))
-  (if (file-exists-p slime-helper-file)
-      (use-package slime
-        :ensure t
-        :init
-        (load slime-helper-file)
-        :config
-        (setq inferior-lisp-program "/usr/bin/sbcl"))))
+(use-package slime
+  :commands slime-setup
+  :defines slime-repl-mode-map
+  :init
+  (slime-setup '(slime-fancy)))
+(setq inferior-lisp-program "/usr/bin/sbcl")
 
 (rassq-delete-all 'change-log-mode auto-mode-alist)
 
@@ -227,3 +241,27 @@
 (require 'org-checklist)
 
 (global-auto-revert-mode t)
+(defun vimacs/org-narrow-to-subtree ()
+  (interactive)
+  (let ((org-indirect-buffer-display 'current-window))
+    (if (not (boundp 'org-indirect-buffer-file-name))
+        (let ((above-buffer (current-buffer))
+              (org-filename (buffer-file-name)))
+          (org-tree-to-indirect-buffer (1+ (org-current-level)))
+          (setq-local org-indirect-buffer-file-name org-filename)
+          (setq-local org-indirect-above-buffer above-buffer))
+      (let ((above-buffer (current-buffer))
+            (org-filename org-indirect-buffer-file-name))
+        (org-tree-to-indirect-buffer (1+ (org-current-level)))
+        (setq-local org-indirect-buffer-file-name org-filename)
+        (setq-local org-indirect-above-buffer above-buffer)))))
+
+(defun vimacs/org-widen-from-subtree ()
+  (interactive)
+  (let ((above-buffer org-indirect-above-buffer)
+        (org-indirect-buffer-display 'current-window))
+    (kill-buffer)
+    (switch-to-buffer above-buffer)))
+
+(define-key org-mode-map (kbd "<C-tab>") 'vimacs/org-narrow-to-subtree)
+(define-key org-mode-map (kbd "<M-tab>") 'vimacs/org-widen-from-subtree)
