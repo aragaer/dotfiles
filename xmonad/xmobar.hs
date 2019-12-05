@@ -11,8 +11,9 @@ Config {
         ,Run StdinReader
         ,Run CommandReader "~/Projects/pymodoro/pymodoro.py" "pomodoro"
         ,Run CommandReader "~/.local/bin/obs-status" "rec"
+        ,Run CommandReader "~/.local/bin/pandora-playing" "pandora"
     ],
     sepChar = "%",
     alignSep = "}{",
-    template = "%StdinReader% }{ %rec% | %pomodoro% | %battery% | %kbd% | <fc=#FFFFCC>%date%</fc>   "
+    template = "%StdinReader% }{ %pandora% | %rec% | %pomodoro% | %battery% | %kbd% | <fc=#FFFFCC>%date%</fc>   "
 }
