@@ -7,7 +7,6 @@ import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.ManageHelpers
 import XMonad.Hooks.SetWMName
 import XMonad.Layout.BoringWindows
-import XMonad.Layout.Fullscreen
 import XMonad.Layout.Minimize
 import XMonad.Layout.NoBorders
 import XMonad.Util.EZConfig(additionalKeys)
@@ -28,7 +27,7 @@ defaults = defaultConfig {
                             isFullscreen --> doFullFloat,
                             manageHook defaultConfig],
     layoutHook = avoidStruts $ smartBorders $ minimize $ boringWindows $ layoutHook desktopConfig,
-    handleEventHook    = XMonad.Layout.Fullscreen.fullscreenEventHook,
+    handleEventHook = handleEventHook defaultConfig <+> XMonad.Hooks.EwmhDesktops.fullscreenEventHook,
     startupHook = setWMName "LG3D"
 } `additionalKeys` myKeys
 
