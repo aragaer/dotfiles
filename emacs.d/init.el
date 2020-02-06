@@ -55,6 +55,12 @@
   :config
   (reverse-im-activate "russian-computer"))
 
+(use-package calendar
+  :ensure nil
+  :commands (calendar)
+  :custom
+  (calendar-week-start-day 1))
+
 (use-package org
   :ensure org-plus-contrib
   :bind (("\C-cl" . org-store-link)
@@ -97,15 +103,12 @@
       entry (file "~/Dropbox/org/review.org")
       "* READ [[%x][%?]]\nSCHEDULED:%^t")
      ("t" "todo")
-     ("tm" "must"
-      entry (file+headline "~/Dropbox/org/agile-actions.org" "Must")
-      "* TODO %^{what}\nSCHEDULED:%^t%?")
-     ("ts" "should"
-      entry (file+headline "~/Dropbox/org/agile-actions.org" "Should")
-      "* TODO %^{what}\nSCHEDULED:%^t%?")
-     ("tc" "could"
-      entry (file+headline "~/Dropbox/org/agile-actions.org" "Could")
-      "* TODO %^{what}\n%?")))
+     ("ts" "simple"
+      entry (file "~/Dropbox/org/inbox.org")
+      "* TODO %?")
+     ("tt" "timed"
+      entry (file "~/Dropbox/org/tickler.org.gpg")
+      "* TODO %?\nSCHEDULED:%^t")))
   (org-refile-targets
    '((nil :maxlevel . 3)
      (org-agenda-files :maxlevel . 3)))
@@ -128,13 +131,6 @@
 (use-package ox-slimhtml
   :ensure t
   :after org)
-
-(setq org-todo-keyword-faces
-      '(("FAILED" . org-warning)
-        ("PLANNED" . "#806000")
-        ("MEETING" . "#806000")
-        ("PROJ" . "#101080")
-        ("CANCELLED" . "#101080")))
 
 (use-package projectile
   :ensure t
@@ -265,3 +261,8 @@
 
 (define-key org-mode-map (kbd "<C-tab>") 'vimacs/org-narrow-to-subtree)
 (define-key org-mode-map (kbd "<M-tab>") 'vimacs/org-widen-from-subtree)
+
+(use-package ebdb
+  :ensure t
+  :custom
+  (ebdb-sources "~/Dropbox/org/ebdb"))
