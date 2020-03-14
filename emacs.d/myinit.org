@@ -18,6 +18,27 @@
   (setq inhibit-startup-screen t)
   (setq initial-scratch-message nil)
 #+END_SRC
+* paths
+** backups
+#+BEGIN_SRC emacs-lisp
+  (use-package files
+    :custom
+    (backup-directory-alist
+     `(("." . ,(locate-user-emacs-file "backups"))))
+    (auto-save-file-name-transforms
+     `((".*" ,(locate-user-emacs-file "backups") t)))
+    (auto-save-list-file-prefix
+     (locate-user-emacs-file "backups/")))
+#+END_SRC
+** custom
+#+BEGIN_SRC emacs-lisp
+  (use-package cus-edit
+    :after files
+    :config
+    (setf custom-file (locate-user-emacs-file "custom.el"))
+    (add-hook 'after-init-hook
+              (lambda () (load custom-file t))))
+#+END_SRC
 * evil mode
 #+BEGIN_SRC emacs-lisp
   (use-package evil
@@ -121,6 +142,100 @@
     :ensure t
     :after org)
 #+END_SRC
+** subtask-reset
+#+BEGIN_SRC emacs-lisp
+  (load (locate-user-emacs-file "org-subtask-reset.el"))
+  (require 'org-subtask-reset)
+#+END_SRC
+** checklist
+#+BEGIN_SRC emacs-lisp
+  (require 'org-checklist)
+#+END_SRC
+* utils
+** which-key
+#+BEGIN_SRC emacs-lisp
+  (use-package which-key
+    :ensure t
+    :config
+    (which-key-mode))
+#+END_SRC
+** vdiff
+#+BEGIN_SRC emacs-lisp
+  (use-package vdiff
+    :ensure t
+    :custom
+    (vdiff-truncate-lines t)
+    :config
+    (define-key vdiff-mode-map (kbd "C-c") vdiff-mode-prefix-map)
+    (evil-define-key 'normal vdiff-mode-map "," vdiff-mode-prefix-map))
+#+END_SRC
+** ivy
+#+BEGIN_SRC emacs-lisp
+  (use-package ivy
+    :ensure t
+    :config
+    (ivy-mode t))
+#+END_SRC
+** reverse-im
+#+BEGIN_SRC emacs-lisp
+  (use-package reverse-im
+    :ensure t
+    :config
+    (reverse-im-activate "russian-computer"))
+#+END_SRC
+** projectile
+#+BEGIN_SRC emacs-lisp
+  (use-package projectile
+    :ensure t
+    :custom
+    (projectile-completion-system 'ivy)
+    :config
+    (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+    (add-to-list 'projectile-globally-ignored-directories ".venv")
+    (projectile-mode +1))
+#+END_SRC
+** magit
+#+BEGIN_SRC emacs-lisp
+  (use-package magit
+    :ensure t
+    :bind (("C-c g" . magit-status))
+    :custom
+    (magit-log-margin '(t age-abbreviated magit-log-margin-width t 7))
+    :init
+    (require 'magit-git)
+    (require 'magit-process))
+#+END_SRC
+** slime                                                             :local:
+#+BEGIN_SRC emacs-lisp
+  (use-package slime
+    :commands slime-setup
+    :defines slime-repl-mode-map
+    :init
+    (slime-setup '(slime-fancy))
+    :config
+    (setq inferior-lisp-program "/usr/bin/sbcl"))
+#+END_SRC
+** epa-file
+#+BEGIN_SRC emacs-lisp
+  (use-package epa-file
+    :config (epa-file-enable))
+#+END_SRC
+** ebdb
+#+BEGIN_SRC emacs-lisp
+  (use-package ebdb
+    :ensure t
+    :custom
+    (ebdb-sources "~/Dropbox/org/ebdb"))
+#+END_SRC
+* helpers
+** hledger
+#+BEGIN_SRC emacs-lisp
+  (defun hledger-account-read ()
+    (interactive)
+    (insert (completing-read
+             "account: " (split-string (shell-command-to-string "hledger a") "\n" t)))
+    (insert "  "))
+#+END_SRC
 * modes
 ** olivetti
 #+BEGIN_SRC emacs-lisp
@@ -144,6 +259,21 @@
     (setq olivetti-body-width 80)
     (olivetti-mode t)
     (wc-mode t))
+#+END_SRC
+** hooks
+*** golang
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'go-mode-hook '(lambda ()
+                             (setq indent-tabs-mode t)
+                             (setq tab-width 4)))
+#+END_SRC
+*** octave
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'auto-mode-alist '("\\.m$" . octave-mode))
+#+END_SRC
+*** changelog
+#+BEGIN_SRC emacs-lisp
+  (rassq-delete-all 'change-log-mode auto-mode-alist)
 #+END_SRC
 * daily page
 #+BEGIN_SRC emacs-lisp
@@ -189,109 +319,31 @@
 
 #+RESULTS:
 : vimacs/org-widen-from-subtree
-* the rest
+* load local settings
 #+BEGIN_SRC emacs-lisp
-  (use-package cus-edit
-    :after files
-    :config
-    (setf custom-file (locate-user-emacs-file "custom.el"))
-    (add-hook 'after-init-hook
-              (lambda () (load custom-file t))))
-
-  (use-package which-key
-    :ensure t
-    :config
-    (which-key-mode))
-
-  (use-package vdiff
-    :ensure t
-    :custom
-    (vdiff-truncate-lines t)
-    :config
-    (define-key vdiff-mode-map (kbd "C-c") vdiff-mode-prefix-map)
-    (evil-define-key 'normal vdiff-mode-map "," vdiff-mode-prefix-map))
-
-  (use-package ivy
-    :ensure t
-    :config
-    (ivy-mode t))
-
-  (use-package reverse-im
-    :ensure t
-    :config
-    (reverse-im-activate "russian-computer"))
-
-  (use-package projectile
-    :ensure t
-    :custom
-    (projectile-completion-system 'ivy)
-    :config
-    (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
-    (add-to-list 'projectile-globally-ignored-directories ".venv")
-    (projectile-mode +1))
-
-  (use-package magit
-    :ensure t
-    :bind (("C-c g" . magit-status))
-    :custom
-    (magit-log-margin '(t age-abbreviated magit-log-margin-width t 7))
-    :init
-    (require 'magit-git)
-    (require 'magit-process))
-
-  (use-package files
-    :custom
-    (backup-directory-alist
-     `(("." . ,(locate-user-emacs-file "backups"))))
-    (auto-save-file-name-transforms
-     `((".*" ,(locate-user-emacs-file "backups") t)))
-    (auto-save-list-file-prefix
-     (locate-user-emacs-file "backups/")))
-
-  (setq-default indent-tabs-mode nil)
-
-  (add-hook 'go-mode-hook '(lambda ()
-                             (setq indent-tabs-mode t)
-                             (setq tab-width 4)))
-
-  (add-to-list 'auto-mode-alist '("\\.m$" . octave-mode))
-
-  (setq browse-url-browser-function 'browse-url-generic browse-url-generic-program "google-chrome-stable")
-
-
-  (put 'narrow-to-region 'disabled nil)
-  (put 'narrow-to-page 'disabled nil)
-
-  (require 'epa-file)
-  (epa-file-enable)
-
   (let ((local-settings-file (locate-user-emacs-file "local_settings.el")))
     (if (file-exists-p local-settings-file)
         (load local-settings-file)))
-
-  (defun hledger-account-read ()
-    (interactive)
-    (insert (completing-read
-             "account: " (split-string (shell-command-to-string "hledger a") "\n" t)))
-    (insert "  "))
-
-  (use-package slime
-    :commands slime-setup
-    :defines slime-repl-mode-map
-    :init
-    (slime-setup '(slime-fancy)))
-  (setq inferior-lisp-program "/usr/bin/sbcl")
-
-  (rassq-delete-all 'change-log-mode auto-mode-alist)
-
-  (load (locate-user-emacs-file "org-subtask-reset.el"))
-  (require 'org-subtask-reset)
-  (require 'org-checklist)
-
+  (let ((local-org-settings-file (locate-user-emacs-file "local.org")))
+    (if (file-exists-p local-org-settings-file)
+        (org-babel-load-file local-org-settings-file)))
+#+END_SRC
+* stuff
+** auto revert
+#+BEGIN_SRC emacs-lisp
   (global-auto-revert-mode t)
-
-  (use-package ebdb
-    :ensure t
-    :custom
-    (ebdb-sources "~/Dropbox/org/ebdb"))
+#+END_SRC
+** indent tabs
+#+BEGIN_SRC emacs-lisp
+  (setq-default indent-tabs-mode nil)
+#+END_SRC
+** narrow commands
+#+BEGIN_SRC emacs-lisp
+  (put 'narrow-to-region 'disabled nil)
+  (put 'narrow-to-page 'disabled nil)
+#+END_SRC
+* config
+** browser
+#+BEGIN_SRC emacs-lisp
+  (setq browse-url-browser-function 'browse-url-generic browse-url-generic-program "google-chrome-stable")
 #+END_SRC
