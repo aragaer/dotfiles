@@ -5,18 +5,21 @@
 #+END_SRC
 * interface tweaks
 #+BEGIN_SRC emacs-lisp
-  (tool-bar-mode -1)
-  (menu-bar-mode -1)
-  (setq whitespace-style '(face tabs tab-mark trailing))
-  (global-whitespace-mode)
-  (global-font-lock-mode 1)
-  (setq show-trailing-whitespace t)
-  (setq ac-auto-show-menu 0.3)
-  (add-to-list 'default-frame-alist '(font . "monospace-12"))
-  (add-text-properties (point-min) (point-max)
-                       '(line-spacing 0.25 line-height 1.25))
-  (setq inhibit-startup-screen t)
-  (setq initial-scratch-message nil)
+  (use-package emacs
+    :ensure t
+    :config
+    (tool-bar-mode -1)
+    (menu-bar-mode -1)
+    (setq whitespace-style '(face tabs tab-mark trailing))
+    (global-whitespace-mode)
+    (global-font-lock-mode 1)
+    (setq show-trailing-whitespace t)
+    (setq ac-auto-show-menu 0.3)
+    (add-to-list 'default-frame-alist '(font . "monospace-12"))
+    (add-text-properties (point-min) (point-max)
+                         '(line-spacing 0.25 line-height 1.25))
+    (setq inhibit-startup-screen t)
+    (setq initial-scratch-message nil))
 #+END_SRC
 * paths
 ** backups
