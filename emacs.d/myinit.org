@@ -154,6 +154,22 @@
 #+BEGIN_SRC emacs-lisp
   (require 'org-checklist)
 #+END_SRC
+** auto-close archive
+Automatically close archive file after archiving a subtree
+Unless it was open before archiving
+#+BEGIN_SRC emacs-lisp
+  (defun aragaer/auto-close-archive (orig-func &rest r)
+    (let* ((location (org-archive--compute-location org-archive-location))
+           (afile (car location))
+           (abuffer (get-file-buffer afile)))
+      (apply orig-func r)
+      (when (not abuffer)
+        (let ((abuffer (get-file-buffer afile)))
+          (save-some-buffers t abuffer)
+          (kill-buffer abuffer)))))
+
+  (advice-add 'org-archive-subtree :around #'aragaer/auto-close-archive)
+#+END_SRC
 * utils
 ** which-key
 #+BEGIN_SRC emacs-lisp
