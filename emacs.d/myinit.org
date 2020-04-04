@@ -90,6 +90,8 @@
     (global-set-key "\C-cc" 'org-capture)
     (setq org-startup-indented t)
     (org-reload)
+    (add-to-list 'org-todo-keyword-faces
+                 '("CANCELLED" . (:foreground "blue" :weight bold)))
     :custom
     (org-agenda-dim-blocked-tasks t)
     (org-agenda-files (locate-user-emacs-file "agenda.list"))
