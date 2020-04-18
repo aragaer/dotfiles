@@ -58,29 +58,30 @@
 #+END_SRC
 * org
 ** capture templates
-#+BEGIN_SRC emacs-lisp
-  (setq my-capture-templates
-        '(("h" "Add Hledger entry"
-           plain (file (lambda ()
-                         (concat *hledger-dir*
-                                 (format-time-string "%Y/%m.journal" (current-time)))))
-           "%<%Y-%m-%d> %^{entry title}\n %?"
-           :empty-lines 1
-           :unnarrowed t)
-          ("r" "Read later")
-          ("rw" "Web page"
-           entry (file "~/Dropbox/org/review.org")
-           "* READ [[%x][%?]]\nSCHEDULED:%^t")
-          ("t" "todo")
-          ("ts" "simple"
-           entry (file "~/Dropbox/org/inbox.org")
-           "* TODO %?")
-          ("tt" "timed"
-           entry (file "~/Dropbox/org/tickler.org.gpg")
-           "* TODO %?\nSCHEDULED:%^t")))
+#+NAME: my-org-capture-templates
+#+BEGIN_SRC emacs-lisp :tangle no
+  (org-capture-templates
+   '(("h" "Add Hledger entry"
+      plain (file (lambda ()
+                    (concat *hledger-dir*
+                            (format-time-string "%Y/%m.journal" (current-time)))))
+      "%<%Y-%m-%d> %^{entry title}\n %?"
+      :empty-lines 1
+      :unnarrowed t)
+     ("r" "Read later")
+     ("rw" "Web page"
+      entry (file "~/Dropbox/org/review.org")
+      "* READ [[%x][%?]]\nSCHEDULED:%^t")
+     ("t" "todo")
+     ("ts" "simple"
+      entry (file "~/Dropbox/org/inbox.org")
+      "* TODO %?")
+     ("tt" "timed"
+      entry (file "~/Dropbox/org/tickler.org.gpg")
+      "* TODO %?\nSCHEDULED:%^t")))
 #+END_SRC
 ** use package
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :noweb yes
   (use-package org
     :ensure org-plus-contrib
     :bind (("\C-cl" . org-store-link)
@@ -112,7 +113,7 @@
      (quote
       (("d" "Undated tasks" alltodo ""
         ((org-agenda-todo-ignore-with-date t))))))
-    (org-capture-templates my-capture-templates)
+    <<my-org-capture-templates>>
     (org-refile-targets
      '((nil :maxlevel . 3)
        (org-agenda-files :maxlevel . 3)))
