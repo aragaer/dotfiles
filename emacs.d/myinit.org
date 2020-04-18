@@ -201,8 +201,15 @@ Unless it was open before archiving
 #+BEGIN_SRC emacs-lisp
   (use-package reverse-im
     :ensure t
+    :demand t
+    :bind
+    ("M-T" . reverse-im-translate-word)
+    :custom
+    (reverse-im-char-fold t)
+    (reverse-im-read-char-advice-function #'reverse-im-read-char-exclude)
+    (reverse-im-input-methods '("russian-computer"))
     :config
-    (reverse-im-activate "russian-computer"))
+    (reverse-im-mode t))
 #+END_SRC
 ** projectile
 #+BEGIN_SRC emacs-lisp
