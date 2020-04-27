@@ -11,7 +11,6 @@
     (tool-bar-mode -1)
     (menu-bar-mode -1)
     (setq whitespace-style '(face tabs tab-mark trailing))
-    (global-whitespace-mode)
     (global-font-lock-mode 1)
     (setq show-trailing-whitespace t)
     (setq ac-auto-show-menu 0.3)
@@ -290,6 +289,14 @@ Unless it was open before archiving
     (wc-mode t))
 #+END_SRC
 ** hooks
+*** prog-mode
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'prog-mode-hook 'whitespace-mode)
+#+END_SRC
+
+#+RESULTS:
+| lambda | nil | (setq indent-tabs-mode t) | (setq tab-width 4) |
+
 *** golang
 #+BEGIN_SRC emacs-lisp
   (add-hook 'go-mode-hook '(lambda ()
