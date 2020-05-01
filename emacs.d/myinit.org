@@ -79,24 +79,49 @@
       entry (file "~/Dropbox/org/tickler.org.gpg")
       "* TODO %?\nSCHEDULED:%^t")))
 #+END_SRC
+** modules
+#+NAME: my-org-modules
+#+BEGIN_SRC emacs-lisp :tangle no
+  (add-to-list 'org-modules 'org-habit)
+#+END_SRC
+*** org-habits custom
+#+NAME: org-habits-custom
+#+BEGIN_SRC emacs-lisp :tangle no
+  (org-habit-graph-column 80)
+#+END_SRC
+*** agenda custom
+#+NAME: agenda-custom
+#+BEGIN_SRC emacs-lisp :tangle no
+  (org-agenda-dim-blocked-tasks t)
+  (org-agenda-files (locate-user-emacs-file "agenda.list"))
+  (org-agenda-span 1)
+  (org-agenda-todo-list-sublevels nil)
+  (org-sort-agenda-notime-is-late nil)
+  (org-agenda-custom-commands
+   (quote
+    (("d" "Undated tasks" alltodo ""
+      ((org-agenda-todo-ignore-with-date t))))))
+#+END_SRC
 ** use package
 #+BEGIN_SRC emacs-lisp :noweb yes
   (use-package org
     :ensure org-plus-contrib
     :bind (("\C-cl" . org-store-link)
-           ("\C-ca" . org-agenda))
+           ("\C-ca" . org-agenda)
+           ("\C-cc" . org-capture))
     :mode ("\\.\\(org\\|org_archive\\|txt\\)$" . org-mode)
+    :init
+    <<my-org-modules>>
     :config
-    (global-set-key "\C-cc" 'org-capture)
     (setq org-startup-indented t)
     (org-reload)
     (add-to-list 'org-todo-keyword-faces
                  '("CANCELLED" . (:foreground "blue" :weight bold)))
+    (org-load-modules-maybe t)
     :custom
-    (org-agenda-dim-blocked-tasks t)
-    (org-agenda-files (locate-user-emacs-file "agenda.list"))
-    (org-agenda-span 1)
-    (org-agenda-todo-list-sublevels nil)
+    <<org-habits-custom>>
+    <<agenda-custom>>
+    <<my-org-capture-templates>>
     (org-blank-before-new-entry '((heading . nil) (plain-list-item . nil)))
     (org-confirm-babel-evaluate nil)
     (org-enforce-todo-dependencies t)
@@ -106,13 +131,7 @@
     (org-log-repeat nil)
     (org-outline-path-complete-in-steps nil)
     (org-refile-use-outline-path 'file)
-    (org-sort-agenda-notime-is-late nil)
     (org-archive-location "archive/%s::")
-    (org-agenda-custom-commands
-     (quote
-      (("d" "Undated tasks" alltodo ""
-        ((org-agenda-todo-ignore-with-date t))))))
-    <<my-org-capture-templates>>
     (org-refile-targets
      '((nil :maxlevel . 3)
        (org-agenda-files :maxlevel . 3)))
@@ -293,10 +312,6 @@ Unless it was open before archiving
 #+BEGIN_SRC emacs-lisp
   (add-hook 'prog-mode-hook 'whitespace-mode)
 #+END_SRC
-
-#+RESULTS:
-| lambda | nil | (setq indent-tabs-mode t) | (setq tab-width 4) |
-
 *** golang
 #+BEGIN_SRC emacs-lisp
   (add-hook 'go-mode-hook '(lambda ()
@@ -352,9 +367,6 @@ Unless it was open before archiving
   (define-key org-mode-map (kbd "<C-tab>") 'vimacs/org-narrow-to-subtree)
   (define-key org-mode-map (kbd "<M-tab>") 'vimacs/org-widen-from-subtree)
 #+END_SRC
-
-#+RESULTS:
-: vimacs/org-widen-from-subtree
 * load local settings
 #+BEGIN_SRC emacs-lisp
   (let ((local-settings-file (locate-user-emacs-file "local_settings.el")))
