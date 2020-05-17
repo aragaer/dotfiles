@@ -97,24 +97,71 @@
   (org-agenda-span 1)
   (org-agenda-todo-list-sublevels nil)
   (org-sort-agenda-notime-is-late nil)
+  (org-agenda-tags-todo-honor-ignore-options t)
   (org-agenda-custom-commands
-   (quote
-    (("d" "Undated tasks" alltodo ""
-      ((org-agenda-todo-ignore-with-date t))))))
+   '(("d" "Undated tasks" alltodo ""
+      ((org-agenda-todo-ignore-with-date t)))
+     ("n" "Next"
+      ((tags-todo "next"
+                  ((org-agenda-overriding-header "Next")
+                   (org-agenda-todo-ignore-scheduled 'future)))
+       (agenda)))))
 #+END_SRC
+*** vimacs narrow-to-subtree
+#+name: vimacs/subtree
+#+BEGIN_SRC emacs-lisp :tangle no
+  (defun vimacs/org-narrow-to-subtree ()
+    (interactive)
+    (let ((org-indirect-buffer-display 'current-window))
+      (if (not (boundp 'org-indirect-buffer-file-name))
+          (let ((above-buffer (current-buffer))
+                (org-filename (buffer-file-name)))
+            (org-tree-to-indirect-buffer (1+ (org-current-level)))
+            (setq-local org-indirect-buffer-file-name org-filename)
+            (setq-local org-indirect-above-buffer above-buffer))
+        (let ((above-buffer (current-buffer))
+              (org-filename org-indirect-buffer-file-name))
+          (org-tree-to-indirect-buffer (1+ (org-current-level)))
+          (setq-local org-indirect-buffer-file-name org-filename)
+          (setq-local org-indirect-above-buffer above-buffer)))))
+
+  (defun vimacs/org-widen-from-subtree ()
+    (interactive)
+    (let ((above-buffer org-indirect-above-buffer)
+          (org-indirect-buffer-display 'current-window))
+      (kill-buffer)
+      (switch-to-buffer above-buffer)))
+#+END_SRC
+** bind
+#+NAME: org-bind-keys
+#+BEGIN_SRC emacs-lisp :tangle no
+  (("C-c l" . org-store-link)
+   ("C-c a" . org-agenda)
+   ("C-c c" . org-capture))
+#+END_SRC
+** after init hook
+There is some issue with startup-indented that requires org-reload
+#+name: org-after-init
+#+begin_src emacs-lisp :tangle no
+  (setq org-startup-indented t)
+  (org-reload)
+  (define-key org-mode-map (kbd "<C-tab>") 'vimacs/org-narrow-to-subtree)
+  (define-key org-mode-map (kbd "<M-tab>") 'vimacs/org-widen-from-subtree)
+#+end_src
 ** use package
 #+BEGIN_SRC emacs-lisp :noweb yes
   (use-package org
     :ensure org-plus-contrib
-    :bind (("\C-cl" . org-store-link)
-           ("\C-ca" . org-agenda)
-           ("\C-cc" . org-capture))
+    :init
+    <<vimacs/subtree>>
+    :bind
+    <<org-bind-keys>>
     :mode ("\\.\\(org\\|org_archive\\|txt\\)$" . org-mode)
     :init
     <<my-org-modules>>
     :config
-    (setq org-startup-indented t)
-    (org-reload)
+    (add-hook 'after-init-hook (lambda ()
+                                 <<org-after-init>>))
     (add-to-list 'org-todo-keyword-faces
                  '("CANCELLED" . (:foreground "blue" :weight bold)))
     (org-load-modules-maybe t)
@@ -165,11 +212,6 @@
   (use-package ox-slimhtml
     :ensure t
     :after org)
-#+END_SRC
-** subtask-reset
-#+BEGIN_SRC emacs-lisp
-  (load (locate-user-emacs-file "org-subtask-reset.el"))
-  (require 'org-subtask-reset)
 #+END_SRC
 ** checklist
 #+BEGIN_SRC emacs-lisp
@@ -339,33 +381,6 @@ Unless it was open before archiving
         (if (> 2 (point-max-marker))
             (insert header))
         (narrow-to-region (1+ (length header)) (point-max-marker)))))
-#+END_SRC
-* vimacs narrow-to-subtree
-#+BEGIN_SRC emacs-lisp
-  (defun vimacs/org-narrow-to-subtree ()
-    (interactive)
-    (let ((org-indirect-buffer-display 'current-window))
-      (if (not (boundp 'org-indirect-buffer-file-name))
-          (let ((above-buffer (current-buffer))
-                (org-filename (buffer-file-name)))
-            (org-tree-to-indirect-buffer (1+ (org-current-level)))
-            (setq-local org-indirect-buffer-file-name org-filename)
-            (setq-local org-indirect-above-buffer above-buffer))
-        (let ((above-buffer (current-buffer))
-              (org-filename org-indirect-buffer-file-name))
-          (org-tree-to-indirect-buffer (1+ (org-current-level)))
-          (setq-local org-indirect-buffer-file-name org-filename)
-          (setq-local org-indirect-above-buffer above-buffer)))))
-
-  (defun vimacs/org-widen-from-subtree ()
-    (interactive)
-    (let ((above-buffer org-indirect-above-buffer)
-          (org-indirect-buffer-display 'current-window))
-      (kill-buffer)
-      (switch-to-buffer above-buffer)))
-
-  (define-key org-mode-map (kbd "<C-tab>") 'vimacs/org-narrow-to-subtree)
-  (define-key org-mode-map (kbd "<M-tab>") 'vimacs/org-widen-from-subtree)
 #+END_SRC
 * load local settings
 #+BEGIN_SRC emacs-lisp
