@@ -1,5 +1,5 @@
 Config {
-    font = "xft:Droid Sans Mono:size=9:bold:antialias=true"
+    font = "xft:Liberation Mono:size=10:bold:antialias=true"
     bgColor = "#000000",
     fgColor = "#ffffff",
     position = Top,

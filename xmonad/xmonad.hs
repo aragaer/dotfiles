@@ -1,5 +1,6 @@
 import System.IO
 import XMonad
+import XMonad.Actions.Minimize
 import XMonad.Config.Desktop
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.EwmhDesktops
@@ -33,7 +34,7 @@ defaults = defaultConfig {
 
 myKeys = [
           ((mod4Mask, xK_m), withFocused minimizeWindow),
-          ((mod4Mask .|. shiftMask, xK_m), sendMessage RestoreNextMinimizedWin),
+          ((mod4Mask .|. shiftMask, xK_m), withLastMinimized maximizeWindow),
           ((mod4Mask, xK_apostrophe), sendMessage ToggleStruts),
           ((mod4Mask, xK_Tab), focusDown),
           ((mod4Mask .|. shiftMask, xK_Tab), focusUp),
@@ -46,7 +47,7 @@ myKeys = [
          ]
 
 main = do
-    xmproc <- spawnPipe "/usr/bin/xmobar ~/.xmonad/xmobar.hs"
+    xmproc <- spawnPipe "xmobar ~/.xmonad/xmobar.hs"
     xmonad . docks $ ewmh $ defaults {
       logHook =  dynamicLogWithPP $ defaultPP {
             ppOutput = System.IO.hPutStrLn xmproc
