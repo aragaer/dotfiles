@@ -158,10 +158,10 @@ There is some issue with startup-indented that requires org-reload
     <<org-bind-keys>>
     :mode ("\\.\\(org\\|org_archive\\|txt\\)$" . org-mode)
     :init
+    (add-hook 'after-init-hook (defun org-after-init ()
+                                 <<org-after-init>>))
     <<my-org-modules>>
     :config
-    (add-hook 'after-init-hook (lambda ()
-                                 <<org-after-init>>))
     (add-to-list 'org-todo-keyword-faces
                  '("CANCELLED" . (:foreground "blue" :weight bold)))
     (org-load-modules-maybe t)
