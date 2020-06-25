@@ -100,7 +100,10 @@
   (org-agenda-tags-todo-honor-ignore-options t)
   (org-agenda-custom-commands
    '(("d" "Undated tasks" alltodo ""
-      ((org-agenda-todo-ignore-with-date t)))
+      ((org-agenda-todo-ignore-with-date t)
+       (org-agenda-files (seq-remove
+                          (lambda (file) (cl-search "mylife" file))
+                          (org-agenda-files nil 'ifmode)))))
      ("n" "Next"
       ((tags-todo "next"
                   ((org-agenda-overriding-header "Next")
