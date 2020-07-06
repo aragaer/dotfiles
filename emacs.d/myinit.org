@@ -172,6 +172,7 @@ There is some issue with startup-indented that requires org-reload
     <<org-habits-custom>>
     <<agenda-custom>>
     <<my-org-capture-templates>>
+    (org-use-sub-superscripts nil)
     (org-blank-before-new-entry '((heading . nil) (plain-list-item . nil)))
     (org-confirm-babel-evaluate nil)
     (org-enforce-todo-dependencies t)
