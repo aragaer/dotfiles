@@ -179,7 +179,6 @@ There is some issue with startup-indented that requires org-reload
     (org-extend-today-until 3)
     (org-hide-leading-stars nil)
     (org-log-into-drawer "LOGBOOK")
-    (org-log-repeat nil)
     (org-outline-path-complete-in-steps nil)
     (org-refile-use-outline-path 'file)
     (org-archive-location "archive/%s::")
