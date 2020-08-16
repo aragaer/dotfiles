@@ -51,9 +51,14 @@
     :custom
     (evil-search-module (quote evil-search)))
 #+END_SRC
-** treat underscore as a part of a word
+** treat underscore as a part of a word (in code)
+Changing underscore to part of a word globally affects highlighting in
+text modes which leads to hiccups in message-mode. I only need
+"underscore as word" for code where I usually use snake_case
+identifiers.
 #+BEGIN_SRC emacs-lisp
-  (modify-syntax-entry ?_ "w")
+  (add-hook 'prog-mode-hook
+            (lambda () (modify-syntax-entry ?_ "w")))
 #+END_SRC
 * org
 ** capture templates
@@ -117,6 +122,10 @@
        (agenda)))
      ("n" . "Next")
      ("nc" "Next - computer" tags-todo "+next+@computer"
+      ((org-agenda-todo-ignore-scheduled 'future)))
+     ("nh" "Next - home" tags-todo "+next+@home"
+      ((org-agenda-todo-ignore-scheduled 'future)))
+     ("nt" "Next - Topcon" tags-todo "+next+@topcon"
       ((org-agenda-todo-ignore-scheduled 'future)))))
 #+END_SRC
 *** vimacs narrow-to-subtree
