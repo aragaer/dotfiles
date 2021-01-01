@@ -49,7 +49,8 @@
     (evil-mode)
     (fset 'evil-visual-update-x-selection 'ignore)
     :custom
-    (evil-search-module (quote evil-search)))
+    (evil-undo-system 'undo-tree)
+    (evil-search-module 'evil-search))
 #+END_SRC
 ** treat underscore as a part of a word (in code)
 Changing underscore to part of a word globally affects highlighting in
@@ -72,6 +73,9 @@ identifiers.
       "%<%Y-%m-%d> %^{entry title}\n %?"
       :empty-lines 1
       :unnarrowed t)
+     ("j" "Journal entry" plain (function org-journal-date-location)
+      "** %?\n"
+      :jump-to-captured t)
      ("r" "Read later")
      ("rw" "Web page"
       entry (file "~/Dropbox/org/review.org")
@@ -109,6 +113,10 @@ identifiers.
        (org-agenda-files (seq-remove
                           (lambda (file) (cl-search "mylife" file))
                           (org-agenda-files nil 'ifmode)))))
+     ("t" . "Tree")
+     ("tn" "Next" occur-tree "TODO.*:next:")
+     ("tw" "Waiting" occur-tree "TODO.*:waiting:")
+     ("ts" "Someday" occur-tree "TODO.*:someday:")
      ("o" "Overview"
       ((tags-todo "next"
                   ((org-agenda-overriding-header "Next")
@@ -120,7 +128,14 @@ identifiers.
                   ((org-agenda-overriding-header "Tickler")
                    (org-agenda-todo-ignore-scheduled 'future)))
        (agenda)))
+     ("w" "Waiting" tags-todo "+waiting"
+      ((org-agenda-todo-ignore-scheduled 'future)))
+     ("s" "Someday" tags-todo "+someday")
+     ("F" "Non-future" tags ""
+      ((org-agenda-todo-ignore-scheduled 'future)))
      ("n" . "Next")
+     ("nn" "Next" tags-todo "+next"
+      ((org-agenda-todo-ignore-scheduled 'future)))
      ("nc" "Next - computer" tags-todo "+next+@computer"
       ((org-agenda-todo-ignore-scheduled 'future)))
      ("nh" "Next - home" tags-todo "+next+@home"
@@ -186,6 +201,7 @@ There is some issue with startup-indented that requires org-reload
     (add-to-list 'org-todo-keyword-faces
                  '("CANCELLED" . (:foreground "blue" :weight bold)))
     (org-load-modules-maybe t)
+    (unbind-key "C-'" org-mode-map) ; Free this one for avy
     :custom
     <<org-habits-custom>>
     <<agenda-custom>>
@@ -195,11 +211,12 @@ There is some issue with startup-indented that requires org-reload
     (org-confirm-babel-evaluate nil)
     (org-enforce-todo-dependencies t)
     (org-extend-today-until 3)
-    (org-hide-leading-stars nil)
+    (org-hide-leading-stars t)
     (org-log-into-drawer "LOGBOOK")
     (org-outline-path-complete-in-steps nil)
     (org-refile-use-outline-path 'file)
     (org-archive-location "archive/%s::")
+    (org-hide-blocks-startup t)
     (org-refile-targets
      '((nil :maxlevel . 3)
        (org-agenda-files :maxlevel . 3)))
@@ -274,10 +291,12 @@ Unless it was open before archiving
 #+END_SRC
 ** ivy
 #+BEGIN_SRC emacs-lisp
-  (use-package ivy
-    :ensure t
-    :config
-    (ivy-mode t))
+    (use-package ivy
+      :ensure t
+      :config
+      (ivy-mode t)
+      (setq ivy-use-virtual-buffers t)
+      (setq ivy-count-format "(%d/%d) "))
 #+END_SRC
 ** reverse-im
 #+BEGIN_SRC emacs-lisp
@@ -288,7 +307,7 @@ Unless it was open before archiving
     ("M-T" . reverse-im-translate-word)
     :custom
     (reverse-im-char-fold t)
-    (reverse-im-read-char-advice-function #'reverse-im-read-char-exclude)
+    (reverse-im-read-char-advice-function #'reverse-im-read-char-include)
     (reverse-im-input-methods '("russian-computer"))
     :config
     (reverse-im-mode t))
@@ -403,6 +422,50 @@ Unless it was open before archiving
             (insert header))
         (narrow-to-region (1+ (length header)) (point-max-marker)))))
 #+END_SRC
+* telega
+#+BEGIN_SRC emacs-lisp
+  (defun my-telega-ins--sticker-image (orig-fun &rest args)
+    (let ((telega-use-images nil))
+      (apply orig-fun args)))
+
+  (defun telega/ignore-chatbuf (str)
+    (let ((buf (get-buffer str)))
+      (and buf (telega-buffer-p buf))))
+
+  (with-eval-after-load 'ivy
+    (add-to-list 'ivy-ignore-buffers #'telega/ignore-chatbuf))
+
+  (use-package telega
+    :ensure t
+    :bind
+    (:map mode-specific-map
+          :prefix-map telega-map
+          :prefix "t"
+          ("t" . telega)
+          ("c" . telega-chat-with))
+    :custom
+    (telega-use-images t)
+    (telega-completing-read-function #'ivy-completing-read)
+    (telega-symbol-msg-succeeded "-")
+    (telega-symbol-msg-viewed "+")
+    (telega-chat--display-buffer-action
+     '((display-buffer-reuse-window display-buffer-use-some-window)))
+    :custom-face
+    (telega-chat-inline-reply ((t (:inherit 'font-lock-comment-face))))
+    (telega-chat-user-title ((t (:inherit 'font-lock-function-name-face))))
+    (telega-chat-timestamp ((t (:inherit 'org-agenda-date))))
+    (telega-msg-status ((t (:inherit 'font-lock-constant-face))))
+    :hook
+    (telega-root-mode . telega-notifications-mode)
+    :config
+    (setq telega-server-libs-prefix
+          (expand-file-name "~/.local/td"))
+    (require 'telega-notifications)
+    (advice-add 'telega-ins--sticker-image :around
+                'my-telega-ins--sticker-image)
+    :commands (telega)
+    :defer t)
+#+END_SRC
 * load local settings
 #+BEGIN_SRC emacs-lisp
   (let ((local-settings-file (locate-user-emacs-file "local_settings.el")))
@@ -416,6 +479,10 @@ Unless it was open before archiving
 ** auto revert
 #+BEGIN_SRC emacs-lisp
   (global-auto-revert-mode t)
+#+END_SRC
+** undo tree
+#+BEGIN_SRC emacs-lisp
+  (global-undo-tree-mode t)
 #+END_SRC
 ** indent tabs
 #+BEGIN_SRC emacs-lisp
