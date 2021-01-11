@@ -14,7 +14,12 @@
     (global-font-lock-mode 1)
     (setq show-trailing-whitespace t)
     (setq ac-auto-show-menu 0.3)
-    (add-to-list 'default-frame-alist '(font . "monospace-12"))
+    (add-to-list 'default-frame-alist '(font . "M+ 1mn-11"))
+    (when (fboundp 'set-fontset-font)
+      ;; force M+ for japanese glyphs
+      (set-fontset-font t 'han
+                        (font-spec :family "M+ 2p light")
+                        nil 'prepend))
     (add-text-properties (point-min) (point-max)
                          '(line-spacing 0.25 line-height 1.25))
     (setq inhibit-startup-screen t)
@@ -74,8 +79,9 @@ identifiers.
       :empty-lines 1
       :unnarrowed t)
      ("j" "Journal entry" plain (function org-journal-date-location)
-      "** %?\n"
-      :jump-to-captured t)
+      "** %?\n")
+     ("J" "Journal todo" plain (function org-journal-date-location)
+      "** TODO%?\nSCHEDULED:%^t")
      ("r" "Read later")
      ("rw" "Web page"
       entry (file "~/Dropbox/org/review.org")
@@ -376,18 +382,11 @@ Unless it was open before archiving
   (use-package feature-mode
     :ensure t)
 #+END_SRC
-** wc-mode
-#+BEGIN_SRC emacs-lisp
-  (use-package wc-mode
-    :ensure t
-    :custom (wc-modeline-format "%tw "))
-#+END_SRC
 ** my-writing-mode
 #+BEGIN_SRC emacs-lisp
   (define-derived-mode my-writing-mode org-mode "my-writing"
     (setq olivetti-body-width 80)
-    (olivetti-mode t)
-    (wc-mode t))
+    (olivetti-mode t))
 #+END_SRC
 ** hooks
 *** prog-mode
@@ -430,7 +429,7 @@ Unless it was open before archiving
 
   (defun telega/ignore-chatbuf (str)
     (let ((buf (get-buffer str)))
-      (and buf (telega-buffer-p buf))))
+      (and buf (fboundp 'telega-buffer-p) (telega-buffer-p buf))))
 
   (with-eval-after-load 'ivy
     (add-to-list 'ivy-ignore-buffers #'telega/ignore-chatbuf))
@@ -455,12 +454,9 @@ Unless it was open before archiving
     (telega-chat-user-title ((t (:inherit 'font-lock-function-name-face))))
     (telega-chat-timestamp ((t (:inherit 'org-agenda-date))))
     (telega-msg-status ((t (:inherit 'font-lock-constant-face))))
-    :hook
-    (telega-root-mode . telega-notifications-mode)
     :config
     (setq telega-server-libs-prefix
           (expand-file-name "~/.local/td"))
-    (require 'telega-notifications)
     (advice-add 'telega-ins--sticker-image :around
                 'my-telega-ins--sticker-image)
     :commands (telega)
