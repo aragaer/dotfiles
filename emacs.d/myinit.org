@@ -20,8 +20,7 @@
       (set-fontset-font t 'han
                         (font-spec :family "M+ 2p light")
                         nil 'prepend))
-    (add-text-properties (point-min) (point-max)
-                         '(line-spacing 0.25 line-height 1.25))
+    (setq split-width-threshold 9999)
     (setq inhibit-startup-screen t)
     (setq initial-scratch-message nil))
 #+END_SRC
