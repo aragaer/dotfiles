@@ -32,16 +32,15 @@ defaults = defaultConfig {
     startupHook = setWMName "LG3D"
 } `additionalKeys` myKeys
 
-myKeys = [
-          ((mod4Mask, xK_m), withFocused minimizeWindow),
-          ((mod4Mask .|. shiftMask, xK_m), withLastMinimized maximizeWindow),
-          ((mod4Mask, xK_apostrophe), sendMessage ToggleStruts),
-          ((mod4Mask, xK_Tab), focusDown),
-          ((mod4Mask .|. shiftMask, xK_Tab), focusUp),
-          ((mod4Mask .|. controlMask, xK_p), spawn "passmenu"),
-          ((mod4Mask, xK_n), spawn "touch ~/.pomodoro_session"),
-          ((mod4Mask .|. shiftMask, xK_n), spawn "rm ~/.pomodoro_session")
-         ]
+myKeys = [((mod4Mask, xK_m), withFocused minimizeWindow)
+         ,((mod4Mask .|. shiftMask, xK_m), withLastMinimized maximizeWindow)
+         ,((mod4Mask, xK_apostrophe), sendMessage ToggleStruts)
+         ,((mod4Mask, xK_Tab), focusDown)
+         ,((mod4Mask .|. shiftMask, xK_Tab), focusUp)
+         ,((mod4Mask .|. controlMask, xK_p), spawn "passmenu")
+         ,((mod4Mask, xK_n), spawn "touch ~/.pomodoro_session")
+         ,((mod4Mask .|. shiftMask, xK_n), spawn "rm ~/.pomodoro_session")
+         ,((mod4Mask .|. controlMask, xK_e), spawn "emacsclient -e '(emacs-everywhere)'")]
 
 main = do
     xmproc <- spawnPipe "xmobar ~/.xmonad/xmobar.hs"

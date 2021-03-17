@@ -3,26 +3,61 @@
 #+BEGIN_SRC emacs-lisp
   (require 'use-package)
 #+END_SRC
-* interface tweaks
+** quelpa
+#+begin_src emacs-lisp
+  (use-package quelpa
+    :ensure t
+    :defer t
+    :custom
+    (quelpa-update-melpa-p nil "Don't update the MELPA git repo."))
+#+end_src
+** ese-package-quelpa
+#+begin_src emacs-lisp
+  (use-package quelpa-use-package
+    :ensure t
+    :init (setq quelpa-use-package-inhibit-loading-quelpa t))
+#+end_src
+** use-package custom-update
+To be able to update lists in /custom/
 #+BEGIN_SRC emacs-lisp
+  (use-package use-package-custom-update
+    :quelpa
+    (use-package-custom-update
+     :repo "a13/use-package-custom-update"
+     :fetcher github
+     :version original))
+#+END_SRC
+* interface tweaks
+#+BEGIN_SRC emacs-lisp :noweb yes
   (use-package emacs
     :ensure t
     :config
     (tool-bar-mode -1)
     (menu-bar-mode -1)
-    (setq whitespace-style '(face tabs tab-mark trailing))
     (global-font-lock-mode 1)
-    (setq show-trailing-whitespace t)
-    (setq ac-auto-show-menu 0.3)
+    (global-auto-revert-mode t)
+    (global-undo-tree-mode t)
+    (global-unset-key (kbd "C-x C-c"))
     (add-to-list 'default-frame-alist '(font . "M+ 1mn-11"))
     (when (fboundp 'set-fontset-font)
       ;; force M+ for japanese glyphs
       (set-fontset-font t 'han
                         (font-spec :family "M+ 2p light")
                         nil 'prepend))
-    (setq split-width-threshold 9999)
-    (setq inhibit-startup-screen t)
-    (setq initial-scratch-message nil))
+    <<narrow-commands>>
+    (setq-default indent-tabs-mode nil)
+    (setq show-trailing-whitespace t
+          ac-auto-show-menu 0.3
+          whitespace-style '(face tabs tab-mark trailing)
+          split-width-threshold 9999
+          inhibit-startup-screen t
+          initial-scratch-message nil))
+#+END_SRC
+** narrow commands
+#+NAME: narrow-commands
+#+BEGIN_SRC emacs-lisp :tangle no
+  (put 'narrow-to-region 'disabled nil)
+  (put 'narrow-to-page 'disabled nil)
 #+END_SRC
 * paths
 ** backups
@@ -54,7 +89,10 @@
     (fset 'evil-visual-update-x-selection 'ignore)
     :custom
     (evil-undo-system 'undo-tree)
-    (evil-search-module 'evil-search))
+    (evil-search-module 'evil-search)
+    :custom-update
+    (evil-emacs-state-modes '(elfeed-search-mode
+                              elfeed-show-mode)))
 #+END_SRC
 ** treat underscore as a part of a word (in code)
 Changing underscore to part of a word globally affects highlighting in
@@ -77,10 +115,6 @@ identifiers.
       "%<%Y-%m-%d> %^{entry title}\n %?"
       :empty-lines 1
       :unnarrowed t)
-     ("j" "Journal entry" plain (function org-journal-date-location)
-      "** %?\n")
-     ("J" "Journal todo" plain (function org-journal-date-location)
-      "** TODO%?\nSCHEDULED:%^t")
      ("r" "Read later")
      ("rw" "Web page"
       entry (file "~/Dropbox/org/review.org")
@@ -313,20 +347,11 @@ Unless it was open before archiving
     :custom
     (reverse-im-char-fold t)
     (reverse-im-read-char-advice-function #'reverse-im-read-char-include)
+    (reverse-im-read-char-exclude-commands
+      '())
     (reverse-im-input-methods '("russian-computer"))
     :config
     (reverse-im-mode t))
-#+END_SRC
-** projectile
-#+BEGIN_SRC emacs-lisp
-  (use-package projectile
-    :ensure t
-    :custom
-    (projectile-completion-system 'ivy)
-    :config
-    (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
-    (add-to-list 'projectile-globally-ignored-directories ".venv")
-    (projectile-mode +1))
 #+END_SRC
 ** magit
 #+BEGIN_SRC emacs-lisp
@@ -384,7 +409,7 @@ Unless it was open before archiving
 ** my-writing-mode
 #+BEGIN_SRC emacs-lisp
   (define-derived-mode my-writing-mode org-mode "my-writing"
-    (setq olivetti-body-width 80)
+    (setq olivetti-body-width 120)
     (olivetti-mode t))
 #+END_SRC
 ** hooks
@@ -461,6 +486,25 @@ Unless it was open before archiving
     :commands (telega)
     :defer t)
 #+END_SRC
+* elfeed
+#+BEGIN_SRC emacs-lisp
+  (use-package elfeed
+    :ensure t
+    :bind (("C-c f" . elfeed))
+    :custom
+    (elfeed-feeds
+     '(("https://github.com/simonmichael/hledger/releases.atom" github hledger)
+       ("https://dilbert.com/feed" comics)
+       ("https://xkcd.com/rss.xml" comics))))
+
+  (use-package elfeed-goodies
+    :ensure t
+    :after elfeed
+    :custom
+    (elfeed-goodies/entry-pane-position 'bottom)
+    :config
+    (elfeed-goodies/setup))
+#+END_SRC
 * load local settings
 #+BEGIN_SRC emacs-lisp
   (let ((local-settings-file (locate-user-emacs-file "local_settings.el")))
@@ -469,24 +513,6 @@ Unless it was open before archiving
   (let ((local-org-settings-file (locate-user-emacs-file "local.org")))
     (if (file-exists-p local-org-settings-file)
         (org-babel-load-file local-org-settings-file)))
-#+END_SRC
-* stuff
-** auto revert
-#+BEGIN_SRC emacs-lisp
-  (global-auto-revert-mode t)
-#+END_SRC
-** undo tree
-#+BEGIN_SRC emacs-lisp
-  (global-undo-tree-mode t)
-#+END_SRC
-** indent tabs
-#+BEGIN_SRC emacs-lisp
-  (setq-default indent-tabs-mode nil)
-#+END_SRC
-** narrow commands
-#+BEGIN_SRC emacs-lisp
-  (put 'narrow-to-region 'disabled nil)
-  (put 'narrow-to-page 'disabled nil)
 #+END_SRC
 * config
 ** browser
