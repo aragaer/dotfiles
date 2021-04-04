@@ -311,6 +311,16 @@ Unless it was open before archiving
 
   (advice-add 'org-archive-subtree :around #'aragaer/auto-close-archive)
 #+END_SRC
+
+Also close all agenda files that were opened when updating org-id locations.
+#+begin_src emacs-lisp
+  (defun aragaer/close-after-id-update (orig-func &rest r)
+    (let ((to-close (seq-remove #'get-file-buffer (org-agenda-files t org-id-search-archives))))
+      (apply orig-func r)
+      (mapcar (lambda (f) (kill-buffer (get-file-buffer f))) to-close)))
+
+  (advice-add 'org-id-update-id-locations :around #'aragaer/close-after-id-update)
+#+end_src
 ** reopen "nohide" blocks
 I want my 'src' blocks to be hidden by default but their results
 wrapped in blocks should be visible. For that I use ':wrap nohide'.
