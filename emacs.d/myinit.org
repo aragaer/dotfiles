@@ -51,6 +51,7 @@ To be able to update lists in /custom/
           whitespace-style '(face tabs tab-mark trailing)
           split-width-threshold 9999
           inhibit-startup-screen t
+          frame-inhibit-implied-resize t
           initial-scratch-message nil))
 #+END_SRC
 ** narrow commands
@@ -310,6 +311,22 @@ Unless it was open before archiving
 
   (advice-add 'org-archive-subtree :around #'aragaer/auto-close-archive)
 #+END_SRC
+** reopen "nohide" blocks
+I want my 'src' blocks to be hidden by default but their results
+wrapped in blocks should be visible. For that I use ':wrap nohide'.
+#+begin_src emacs-lisp
+  (defun aragaer/show-nohide (&rest r)
+    (let* ((e (org-element-at-point))
+           (subtype (org-element-property :type e)))
+      (when (equal subtype "nohide")
+        (org-hide-block-toggle nil t e))))
+
+  (advice-add
+   'org-hide-block-all
+   :after
+   (lambda (&rest r) (org-block-map #'aragaer/show-nohide))
+   '((name . "show-nohide")))
+#+end_src
 * utils
 ** which-key
 #+BEGIN_SRC emacs-lisp
