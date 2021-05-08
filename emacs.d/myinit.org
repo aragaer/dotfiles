@@ -91,6 +91,7 @@ To be able to update lists in /custom/
     :custom
     (evil-undo-system 'undo-tree)
     (evil-search-module 'evil-search)
+    (evil-want-C-i-jump nil)
     :custom-update
     (evil-emacs-state-modes '(elfeed-search-mode
                               elfeed-show-mode)))
@@ -216,11 +217,9 @@ identifiers.
    ("C-c c" . org-capture))
 #+END_SRC
 ** after init hook
-There is some issue with startup-indented that requires org-reload
 #+name: org-after-init
 #+begin_src emacs-lisp :tangle no
   (setq org-startup-indented t)
-  (org-reload)
   (define-key org-mode-map (kbd "<C-tab>") 'vimacs/org-narrow-to-subtree)
   (define-key org-mode-map (kbd "<M-tab>") 'vimacs/org-widen-from-subtree)
 #+end_src
@@ -256,6 +255,7 @@ There is some issue with startup-indented that requires org-reload
     (org-outline-path-complete-in-steps nil)
     (org-refile-use-outline-path 'file)
     (org-archive-location "archive/%s::")
+    (org-return-follows-link t)
     (org-hide-blocks-startup t)
     (org-refile-targets
      '((nil :maxlevel . 3)
