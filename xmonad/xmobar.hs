@@ -9,7 +9,7 @@ Config {
         ,Run Date "%Y.%m.%d %H:%M:%S" "date" 10
         ,Run BatteryN ["BAT0"] ["-t", "<left>% <timeleft>"] 60 "battery"
         ,Run StdinReader
-        ,Run CommandReader "~/Projects/pymodoro/pymodoro.py" "pomodoro"
+        ,Run CommandReader "~/Projects/pymodoro/pymodoro.py 30 5" "pomodoro"
         ,Run CommandReader "~/.local/bin/obs-status" "rec"
         ,Run CommandReader "~/.local/bin/pandora-playing" "pandora"
     ],

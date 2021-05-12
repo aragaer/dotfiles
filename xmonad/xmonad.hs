@@ -45,7 +45,7 @@ myKeys = [((mod4Mask, xK_m), withFocused minimizeWindow)
 main = do
     xmproc <- spawnPipe "xmobar ~/.xmonad/xmobar.hs"
     xmonad . docks $ ewmh $ defaults {
-      logHook =  dynamicLogWithPP $ defaultPP {
+      logHook =  dynamicLogWithPP $ def {
             ppOutput = System.IO.hPutStrLn xmproc
           , ppTitle = xmobarColor xmobarTitleColor "" . shorten 100
           , ppCurrent = xmobarColor xmobarCurrentWorkspaceColor "" . wrap "[" "]"
