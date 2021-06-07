@@ -36,7 +36,6 @@ To be able to update lists in /custom/
     (menu-bar-mode -1)
     (global-font-lock-mode 1)
     (global-auto-revert-mode t)
-    (global-undo-tree-mode t)
     (global-unset-key (kbd "C-x C-c"))
     (add-to-list 'default-frame-alist '(font . "M+ 1mn-11"))
     (when (fboundp 'set-fontset-font)
@@ -105,6 +104,12 @@ identifiers.
   (add-hook 'prog-mode-hook
             (lambda () (modify-syntax-entry ?_ "w")))
 #+END_SRC
+** undo-tree
+#+begin_src emacs-lisp
+  (use-package undo-tree
+    :ensure t
+    :config (global-undo-tree-mode t))
+#+end_src
 * org
 ** capture templates
 #+NAME: my-org-capture-templates
