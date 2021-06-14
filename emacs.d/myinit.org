@@ -396,16 +396,6 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
     (require 'magit-git)
     (require 'magit-process))
 #+END_SRC
-** slime                                                             :local:
-#+BEGIN_SRC emacs-lisp
-  (use-package slime
-    :commands slime-setup
-    :defines slime-repl-mode-map
-    :init
-    (slime-setup '(slime-fancy))
-    :config
-    (setq inferior-lisp-program "/usr/bin/sbcl"))
-#+END_SRC
 ** epa-file
 #+BEGIN_SRC emacs-lisp
   (use-package epa-file
@@ -418,6 +408,89 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
     :custom
     (ebdb-sources "~/Dropbox/org/ebdb"))
 #+END_SRC
+** avy
+#+begin_src emacs-lisp
+  (use-package avy
+    :ensure t
+    :bind
+    (("C-'" .   avy-goto-char-timer)
+     :map goto-map
+     ("M-g" . avy-goto-line)
+     :map search-map
+     ("M-s" . avy-goto-word-1))
+    :config
+    (avy-setup-default))
+#+end_src
+** org-journal
+#+begin_src emacs-lisp
+  (use-package org-journal
+    :ensure t
+    :defer t
+    :bind
+    (("C-c j" . org-journal-new-entry)
+     ("C-c J" . org-journal-new-scheduled-entry))
+    :init
+    ;; Change default prefix key; needs to be set before loading org-journal
+    (setq org-journal-prefix-key "C-c j")
+    :config
+    (setq org-journal-dir "~/Dropbox/mind_dump/journal"
+          org-journal-file-format "journal-%Y-%m-%d.org")
+    :custom
+    (org-journal-file-type 'weekly)
+    (org-journal-date-format "%A, %Y-%m-%d")
+    (org-journal-start-on-weekday 7)
+    (org-journal-hide-entries-p t)
+    (org-journal-enable-agenda-integration t)
+    (org-journal-file-header (lambda (time) "#+startup: overview\n#+startup: shrink\n#+category: journal\n")))
+
+  (defun org-journal-find-location ()
+    ;; Open today's journal, but specify a non-nil prefix argument in order to
+    ;; inhibit inserting the heading; org-capture will insert the heading.
+    (org-journal-new-entry t)
+    ;; Position point on the journal's top-level heading so that org-capture
+    ;; will add the new entry as a child entry.
+    (goto-char (point-min)))
+
+  (defvar org-journal--date-location-scheduled-time nil)
+
+  (defun org-journal-date-location (&optional scheduled-time)
+    (let ((scheduled-time (or scheduled-time (org-read-date nil nil nil "Date:"))))
+      (setq org-journal--date-location-scheduled-time scheduled-time)
+      (org-journal-new-entry t (org-time-string-to-time scheduled-time))
+      (goto-char (point-max))))
+#+end_src
+** project.el
+#+begin_src emacs-lisp
+  (use-package project
+  :ensure t
+  :bind-keymap
+  ("C-c p" . project-prefix-map)
+  :config
+  (setq project-switch-commands
+        '((?f "Find file" project-find-file)
+          (?g "Magit status" magit-status))))
+#+end_src
+** emacs-everywhere
+#+begin_src emacs-lisp
+  (use-package emacs-everywhere
+    :ensure t)
+#+end_src
+** org-roam
+#+begin_src emacs-lisp
+  (use-package org-roam
+    :ensure t
+    :hook
+    (after-init . org-roam-mode)
+    :custom
+    (org-roam-directory (file-truename "~/Dropbox/org/roam"))
+    (org-roam-db-update-method 'immediate)
+    :bind (:map org-roam-mode-map
+                (("C-c n l" . org-roam)
+                 ("C-c n f" . org-roam-find-file))
+                :map org-mode-map
+                (("C-c n i" . org-roam-insert))
+                (("C-c n I" . org-roam-insert-immediate))))
+#+end_src
 * helpers
 ** hledger
 #+BEGIN_SRC emacs-lisp
