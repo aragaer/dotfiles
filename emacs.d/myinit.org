@@ -11,7 +11,7 @@
     :custom
     (quelpa-update-melpa-p nil "Don't update the MELPA git repo."))
 #+end_src
-** ese-package-quelpa
+** use-package-quelpa
 #+begin_src emacs-lisp
   (use-package quelpa-use-package
     :ensure t
@@ -87,13 +87,16 @@ To be able to update lists in /custom/
     :config
     (evil-mode)
     (fset 'evil-visual-update-x-selection 'ignore)
+    (evil-set-initial-state 'prog-mode 'normal)
+    (evil-set-initial-state 'fundamental-mode 'normal)
+    (evil-set-initial-state 'text-mode 'normal)
+    (evil-set-initial-state 'picture-mode 'emacs)
+    (evil-set-initial-state 'comint-mode 'emacs)
     :custom
     (evil-undo-system 'undo-tree)
     (evil-search-module 'evil-search)
     (evil-want-C-i-jump nil)
-    :custom-update
-    (evil-emacs-state-modes '(elfeed-search-mode
-                              elfeed-show-mode)))
+    (evil-default-state 'emacs))
 #+END_SRC
 ** treat underscore as a part of a word (in code)
 Changing underscore to part of a word globally affects highlighting in
@@ -153,6 +156,10 @@ identifiers.
   (org-agenda-todo-list-sublevels nil)
   (org-sort-agenda-notime-is-late nil)
   (org-agenda-tags-todo-honor-ignore-options t)
+  (org-agenda-time-grid
+   '((daily today require-timed)
+     ()
+     "......" "----------------"))
   (org-agenda-custom-commands
    '(("d" "Undated tasks" alltodo ""
       ((org-agenda-todo-ignore-with-date t)
@@ -169,6 +176,7 @@ identifiers.
                    (org-agenda-todo-ignore-scheduled 'future)))
        (tags-todo "calendar"
                   ((org-agenda-overriding-header "Calendar")
+                   (org-agenda-entry-types '(:scheduled))
                    (org-agenda-todo-ignore-scheduled 'future)))
        (tags-todo "tickler"
                   ((org-agenda-overriding-header "Tickler")
@@ -179,14 +187,10 @@ identifiers.
      ("s" "Someday" tags-todo "+someday")
      ("F" "Non-future" tags ""
       ((org-agenda-todo-ignore-scheduled 'future)))
-     ("n" . "Next")
-     ("nn" "Next" tags-todo "+next"
-      ((org-agenda-todo-ignore-scheduled 'future)))
-     ("nc" "Next - computer" tags-todo "+next+@computer"
-      ((org-agenda-todo-ignore-scheduled 'future)))
-     ("nh" "Next - home" tags-todo "+next+@home"
-      ((org-agenda-todo-ignore-scheduled 'future)))
-     ("nt" "Next - Topcon" tags-todo "+next+@topcon"
+     ("n" "Next" tags-todo "+next"
+      ((org-agenda-todo-ignore-scheduled 'future)
+       (org-agenda-dim-blocked-tasks 'invisible)))
+     ("N" "Next including blocked" tags-todo "+next"
       ((org-agenda-todo-ignore-scheduled 'future)))))
 #+END_SRC
 *** vimacs narrow-to-subtree
@@ -209,10 +213,11 @@ identifiers.
 
   (defun vimacs/org-widen-from-subtree ()
     (interactive)
-    (let ((above-buffer org-indirect-above-buffer)
-          (org-indirect-buffer-display 'current-window))
-      (kill-buffer)
-      (switch-to-buffer above-buffer)))
+    (when (boundp 'org-indirect-above-buffer)
+      (let ((above-buffer org-indirect-above-buffer)
+            (org-indirect-buffer-display 'current-window))
+        (kill-buffer)
+        (switch-to-buffer above-buffer))))
 #+END_SRC
 ** bind
 #+NAME: org-bind-keys
@@ -262,6 +267,7 @@ identifiers.
     (org-archive-location "archive/%s::")
     (org-return-follows-link t)
     (org-hide-blocks-startup t)
+    (org-todo-keywords (quote ((sequence "TODO" "|" "DONE") (sequence "|" "CANCELLED"))))
     (org-refile-targets
      '((nil :maxlevel . 3)
        (org-agenda-files :maxlevel . 3)))
@@ -277,18 +283,16 @@ identifiers.
 #+END_SRC
 ** evil
 #+BEGIN_SRC emacs-lisp
-  (add-hook 'org-capture-mode-hook 'evil-insert-state)
 
   (use-package evil-org
     :ensure t
     :after org
     :config
-    (add-hook 'org-mode-hook 'evil-org-mode)
+    (add-hook 'org-capture-mode-hook #'evil-insert-state)
+    (add-hook 'org-mode-hook #'evil-org-mode)
     (add-hook 'evil-org-mode-hook
               (lambda ()
-                (evil-org-set-key-theme)))
-    (require 'evil-org-agenda)
-    (evil-org-agenda-set-keys))
+                (evil-org-set-key-theme))))
 #+END_SRC
 ** slimhtml
 #+BEGIN_SRC emacs-lisp
@@ -379,8 +383,6 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
     :custom
     (reverse-im-char-fold t)
     (reverse-im-read-char-advice-function #'reverse-im-read-char-include)
-    (reverse-im-read-char-exclude-commands
-      '())
     (reverse-im-input-methods '("russian-computer"))
     :config
     (reverse-im-mode t))
@@ -426,9 +428,6 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
   (use-package org-journal
     :ensure t
     :defer t
-    :bind
-    (("C-c j" . org-journal-new-entry)
-     ("C-c J" . org-journal-new-scheduled-entry))
     :init
     ;; Change default prefix key; needs to be set before loading org-journal
     (setq org-journal-prefix-key "C-c j")
@@ -477,19 +476,38 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
 #+end_src
 ** org-roam
 #+begin_src emacs-lisp
-  (setq org-roam-v2-ack t)
   (use-package org-roam
     :ensure t
     :hook
     (after-init . org-roam-setup)
     :custom
-    (org-roam-directory (file-truename "~/Dropbox/org/roam"))
+    (org-roam-directory (file-truename "~/Dropbox/org/roam/"))
     (org-roam-db-update-method 'immediate)
     :bind ((("C-c n l" . org-roam-buffer-toggle)
             ("C-c n c" . org-roam-capture)
-            ("C-c n f" . org-roam-node-find))
+            ("C-c n f" . org-roam-node-find)
+            ("C-c j" . org-roam-dailies-map))
            :map org-mode-map
-           (("C-c n i" . org-roam-node-insert))))
+           (("C-c n i" . org-roam-node-insert)
+            ("C-c n w" . org-roam-refile)))
+    :init
+    (setq org-roam-v2-ack t)
+    :config
+    (cl-defmethod org-roam-node-filetitle ((node org-roam-node))
+      "Return the file TITLE for the node."
+      (org-roam-get-keyword "TITLE" (org-roam-node-file node)))
+    (cl-defmethod org-roam-node-hierarchy ((node org-roam-node))
+      "Return the hierarchy for the node."
+      (let ((title (org-roam-node-title node))
+            (olp (org-roam-node-olp node))
+            (level (org-roam-node-level node))
+            (filetitle (org-roam-node-filetitle node)))
+        (concat
+         (if (> level 0) (concat filetitle " > "))
+         (if (> level 1) (concat (string-join olp " > ") " > "))
+         title)))
+    (setq org-roam-node-display-template "${hierarchy:*} ${tags:20}")
+    (require 'org-roam-dailies))
 #+end_src
 * helpers
 ** hledger
@@ -497,7 +515,7 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
   (defun hledger-account-read ()
     (interactive)
     (insert (completing-read
-             "account: " (split-string (shell-command-to-string "hledger a") "\n" t)))
+             "account: " (split-string (shell-command-to-string "hledger acc") "\n" t)))
     (insert "  "))
 #+END_SRC
 * modes
@@ -520,13 +538,13 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
 ** hooks
 *** prog-mode
 #+BEGIN_SRC emacs-lisp
-  (add-hook 'prog-mode-hook 'whitespace-mode)
+  (add-hook 'prog-mode-hook #'whitespace-mode)
 #+END_SRC
 *** golang
 #+BEGIN_SRC emacs-lisp
-  (add-hook 'go-mode-hook '(lambda ()
-                             (setq indent-tabs-mode t)
-                             (setq tab-width 4)))
+  (add-hook 'go-mode-hook (lambda ()
+                            (setq indent-tabs-mode t)
+                            (setq tab-width 4)))
 #+END_SRC
 *** octave
 #+BEGIN_SRC emacs-lisp
@@ -578,6 +596,7 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
     (telega-symbol-msg-viewed "+")
     (telega-chat--display-buffer-action
      '((display-buffer-reuse-window display-buffer-use-some-window)))
+    (telega-voice-chat-display '())
     :custom-face
     (telega-chat-inline-reply ((t (:inherit 'font-lock-comment-face))))
     (telega-chat-user-title ((t (:inherit 'font-lock-function-name-face))))
@@ -622,5 +641,23 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
 * config
 ** browser
 #+BEGIN_SRC emacs-lisp
-  (setq browse-url-browser-function 'browse-url-generic browse-url-generic-program "google-chrome-stable")
+  (defun get-next-or-first (seq &optional current)
+    (cl-first
+     (if current
+         (cl-loop for (item . rest) on seq
+                  until (string= item current)
+                  finally return (or rest seq))
+       seq)))
+
+  (setq my-browsers '("firefox-bin" "google-chrome-stable"))
+  (defun aragaer/switch-browser (&optional reset)
+    (interactive "P")
+    (setq browse-url-generic-program
+          (if reset
+              (car my-browsers)
+            (get-next-or-first my-browsers browse-url-generic-program))))
+
+  (define-key global-map (kbd "C-x g") 'aragaer/switch-browser)
+  (setq browse-url-browser-function 'browse-url-generic
+        browse-url-generic-program (car my-browsers))
 #+END_SRC
