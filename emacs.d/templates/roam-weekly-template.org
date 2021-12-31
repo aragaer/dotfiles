@@ -1,0 +1,33 @@
+#+filetags: @journal
+#+startup: overview
+
+- year :: %(aragaer/this-week-yearly)
+
+* Timedot
+:PROPERTIES:
+:header-args: :var begin="%(aragaer/this-week-begin-date)" end="%(aragaer/next-week-begin-date)" LEDGER_FILE=(file-truename "~/Dropbox/org/timedot/2021.log")
+:END:
+#+name: add_hline
+#+begin_src emacs-lisp :var data='("") :results silent
+  (cons (car data) (cons 'hline (cdr data)))
+#+end_src
+
+** общее
+#+begin_src sh :post add_hline(data=*this*)
+  hledger bal -DT not:equity -b$begin -e$end -O csv | sed 's/account/activity/; s/....-..-//g'
+#+end_src
+
+** по проектам
+#+begin_src sh :post add_hline(data=*this*)
+  hledger bal -NTD not:equity -b$begin -e$end -O csv --depth=1 | sed 's/account/project/; s/....-..-//g'
+#+end_src
+
+** по слотам
+#+begin_src sh :post add_hline(data=*this*)
+  hledger bal -DNT not:equity -b$begin -e$end -O csv --pivot=slot | sed 's/account/slot/; s/....-..-//g'
+#+end_src
+
+** по дисциплинам
+#+begin_src sh :post add_hline(data=*this*)
+  hledger bal -DNT not:equity -b$begin -e$end -O csv --pivot=practice | sed 's/account/practice/; s/....-..-//g'
+#+end_src

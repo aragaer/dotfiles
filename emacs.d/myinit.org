@@ -38,6 +38,7 @@ To be able to update lists in /custom/
     (global-auto-revert-mode t)
     (global-unset-key (kbd "C-x C-c"))
     (add-to-list 'default-frame-alist '(font . "M+ 1mn-11"))
+    (set-face-attribute 'fixed-pitch nil :font "M+ 1mn-11")
     (when (fboundp 'set-fontset-font)
       ;; force M+ for japanese glyphs
       (set-fontset-font t 'han
@@ -51,7 +52,8 @@ To be able to update lists in /custom/
           split-width-threshold 9999
           inhibit-startup-screen t
           frame-inhibit-implied-resize t
-          initial-scratch-message nil))
+          initial-scratch-message nil
+          sentence-end-double-space nil))
 #+END_SRC
 ** narrow commands
 #+NAME: narrow-commands
@@ -141,7 +143,13 @@ identifiers.
 #+NAME: my-org-modules
 #+BEGIN_SRC emacs-lisp :tangle no
   (add-to-list 'org-modules 'org-habit)
+  (add-to-list 'org-modules 'org-checklist)
 #+END_SRC
+*** org-contrib
+#+begin_src emacs-lisp
+  (use-package org-contrib
+    :ensure t)
+#+end_src
 *** org-habits custom
 #+NAME: org-habits-custom
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -156,6 +164,7 @@ identifiers.
   (org-agenda-todo-list-sublevels nil)
   (org-sort-agenda-notime-is-late nil)
   (org-agenda-tags-todo-honor-ignore-options t)
+  (org-agenda-window-setup 'current-window)
   (org-agenda-time-grid
    '((daily today require-timed)
      ()
@@ -236,12 +245,13 @@ identifiers.
 ** use package
 #+BEGIN_SRC emacs-lisp :noweb yes
   (use-package org
-    :ensure org-plus-contrib
     :init
     <<vimacs/subtree>>
     :bind
     <<org-bind-keys>>
     :mode ("\\.\\(org\\|org_archive\\|txt\\)$" . org-mode)
+    :hook
+    (org-mode . visual-line-mode)
     :init
     (add-hook 'after-init-hook (defun org-after-init ()
                                  <<org-after-init>>))
@@ -283,7 +293,6 @@ identifiers.
 #+END_SRC
 ** evil
 #+BEGIN_SRC emacs-lisp
-
   (use-package evil-org
     :ensure t
     :after org
@@ -299,10 +308,6 @@ identifiers.
   (use-package ox-slimhtml
     :ensure t
     :after org)
-#+END_SRC
-** checklist
-#+BEGIN_SRC emacs-lisp
-  (require 'org-checklist)
 #+END_SRC
 ** auto-close archive
 Automatically close archive file after archiving a subtree
@@ -550,6 +555,10 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
 #+BEGIN_SRC emacs-lisp
   (add-to-list 'auto-mode-alist '("\\.m$" . octave-mode))
 #+END_SRC
+*** c-sharp
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'auto-mode-alist '("\\.cs$" . c-mode))
+#+END_SRC
 *** changelog
 #+BEGIN_SRC emacs-lisp
   (rassq-delete-all 'change-log-mode auto-mode-alist)
@@ -597,14 +606,13 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
     (telega-chat--display-buffer-action
      '((display-buffer-reuse-window display-buffer-use-some-window)))
     (telega-voice-chat-display '())
+    (telega-server-libs-prefix (expand-file-name "~/.local/td"))
     :custom-face
     (telega-chat-inline-reply ((t (:inherit 'font-lock-comment-face))))
     (telega-chat-user-title ((t (:inherit 'font-lock-function-name-face))))
     (telega-chat-timestamp ((t (:inherit 'org-agenda-date))))
     (telega-msg-status ((t (:inherit 'font-lock-constant-face))))
     :config
-    (setq telega-server-libs-prefix
-          (expand-file-name "~/.local/td"))
     (advice-add 'telega-ins--sticker-image :around
                 'my-telega-ins--sticker-image)
     :commands (telega)
@@ -655,7 +663,8 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
     (setq browse-url-generic-program
           (if reset
               (car my-browsers)
-            (get-next-or-first my-browsers browse-url-generic-program))))
+            (get-next-or-first my-browsers browse-url-generic-program)))
+    (message "Using browser %s" browse-url-generic-program))
 
   (define-key global-map (kbd "C-x g") 'aragaer/switch-browser)
   (setq browse-url-browser-function 'browse-url-generic
