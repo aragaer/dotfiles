@@ -1,0 +1,6 @@
+* Function to add hline to any table
+#+begin_src elisp
+  (defun org--add-hline (data)
+    (if (and data (cdr data))
+        (cons (car data) (cons 'hline (cdr data)))))
+#+end_src

@@ -5,7 +5,7 @@
 
 * Timedot
 :PROPERTIES:
-:header-args: :var begin="%(aragaer/this-week-begin-date)" end="%(aragaer/next-week-begin-date)" LEDGER_FILE=(file-truename "~/Dropbox/org/timedot/2021.log")
+:header-args: :var begin="%(aragaer/this-week-begin-date)" end="%(aragaer/next-week-begin-date)" LEDGER_FILE=(file-truename "~/Dropbox/org/timedot/timedot.log")
 :END:
 #+name: add_hline
 #+begin_src emacs-lisp :var data='("") :results silent

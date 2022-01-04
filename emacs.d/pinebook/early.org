@@ -1,0 +1,8 @@
+* font
+#+begin_src elisp
+  (setq *preferred-font* "M+ 1mn-14")
+#+end_src
+* browsers
+#+begin_src elisp
+  (setq *browsers* '("firefox"))
+#+end_src

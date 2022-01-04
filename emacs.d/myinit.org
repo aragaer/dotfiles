@@ -27,6 +27,19 @@ To be able to update lists in /custom/
      :fetcher github
      :version original))
 #+END_SRC
+* my custom
+#+begin_src elisp
+  (defvar *preferred-font* "M+ 1mn-11"
+    "Preferred font")
+  (defvar *browsers* '("firefox")
+    "List of available browsers")
+#+end_src
+* load early local settings
+#+BEGIN_SRC emacs-lisp
+  (let ((local-org-settings-file (locate-user-emacs-file "early-local.org")))
+    (if (file-exists-p local-org-settings-file)
+        (org-babel-load-file local-org-settings-file)))
+#+END_SRC
 * interface tweaks
 #+BEGIN_SRC emacs-lisp :noweb yes
   (use-package emacs
@@ -37,8 +50,9 @@ To be able to update lists in /custom/
     (global-font-lock-mode 1)
     (global-auto-revert-mode t)
     (global-unset-key (kbd "C-x C-c"))
-    (add-to-list 'default-frame-alist '(font . "M+ 1mn-11"))
-    (set-face-attribute 'fixed-pitch nil :font "M+ 1mn-11")
+    (add-to-list 'default-frame-alist '(font . *preferred-font*))
+    (set-face-attribute 'default nil :font *preferred-font*)
+    (set-face-attribute 'fixed-pitch nil :font *preferred-font*)
     (when (fboundp 'set-fontset-font)
       ;; force M+ for japanese glyphs
       (set-fontset-font t 'han
@@ -55,6 +69,9 @@ To be able to update lists in /custom/
           initial-scratch-message nil
           sentence-end-double-space nil))
 #+END_SRC
+** fonts
+#+begin_src elisp :noweb yes
+#+end_src
 ** narrow commands
 #+NAME: narrow-commands
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -303,11 +320,9 @@ identifiers.
               (lambda ()
                 (evil-org-set-key-theme))))
 #+END_SRC
-** slimhtml
+** checklist
 #+BEGIN_SRC emacs-lisp
-  (use-package ox-slimhtml
-    :ensure t
-    :after org)
+  (require 'org-checklist)
 #+END_SRC
 ** auto-close archive
 Automatically close archive file after archiving a subtree
@@ -466,13 +481,11 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
 ** project.el
 #+begin_src emacs-lisp
   (use-package project
-  :ensure t
-  :bind-keymap
-  ("C-c p" . project-prefix-map)
-  :config
-  (setq project-switch-commands
-        '((?f "Find file" project-find-file)
-          (?g "Magit status" magit-status))))
+    :ensure t
+    :config
+    (setq project-switch-commands
+          '((?f "Find file" project-find-file)
+            (?g "Magit status" magit-status))))
 #+end_src
 ** emacs-everywhere
 #+begin_src emacs-lisp
@@ -615,6 +628,8 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
     :config
     (advice-add 'telega-ins--sticker-image :around
                 'my-telega-ins--sticker-image)
+    (set-face-attribute 'telega-entity-type-code nil :height 1.0)
+    (set-face-attribute 'telega-entity-type-pre nil :height 1.0)
     :commands (telega)
     :defer t)
 #+END_SRC
@@ -637,15 +652,6 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
     :config
     (elfeed-goodies/setup))
 #+END_SRC
-* load local settings
-#+BEGIN_SRC emacs-lisp
-  (let ((local-settings-file (locate-user-emacs-file "local_settings.el")))
-    (if (file-exists-p local-settings-file)
-        (load local-settings-file)))
-  (let ((local-org-settings-file (locate-user-emacs-file "local.org")))
-    (if (file-exists-p local-org-settings-file)
-        (org-babel-load-file local-org-settings-file)))
-#+END_SRC
 * config
 ** browser
 #+BEGIN_SRC emacs-lisp
@@ -656,17 +662,30 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
                   until (string= item current)
                   finally return (or rest seq))
        seq)))
-
-  (setq my-browsers '("firefox-bin" "google-chrome-stable"))
   (defun aragaer/switch-browser (&optional reset)
     (interactive "P")
     (setq browse-url-generic-program
           (if reset
-              (car my-browsers)
-            (get-next-or-first my-browsers browse-url-generic-program)))
+              (car *browsers*)
+            (get-next-or-first *browsers* browse-url-generic-program)))
     (message "Using browser %s" browse-url-generic-program))
 
   (define-key global-map (kbd "C-x g") 'aragaer/switch-browser)
   (setq browse-url-browser-function 'browse-url-generic
-        browse-url-generic-program (car my-browsers))
+        browse-url-generic-program (car *browsers*))
+#+END_SRC
+* load local settings
+#+BEGIN_SRC emacs-lisp
+  (let ((local-settings-file (locate-user-emacs-file "local_settings.el")))
+    (if (file-exists-p local-settings-file)
+        (load local-settings-file)))
+  (let ((local-org-settings-file (locate-user-emacs-file "local.org")))
+    (if (file-exists-p local-org-settings-file)
+        (org-babel-load-file local-org-settings-file)))
+#+END_SRC
+* extra org things
+#+BEGIN_SRC emacs-lisp
+  (let ((org-tweaks-file (locate-user-emacs-file "my-org.org")))
+    (if (file-exists-p org-tweaks-file)
+        (org-babel-load-file org-tweaks-file)))
 #+END_SRC
