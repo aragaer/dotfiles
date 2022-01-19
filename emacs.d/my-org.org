@@ -1,6 +1,326 @@
+#+STARTUP: overview
 * Function to add hline to any table
-#+begin_src elisp
+#+begin_src emacs-lisp
   (defun org--add-hline (data)
     (if (and data (cdr data))
         (cons (car data) (cons 'hline (cdr data)))))
+#+end_src
+* Agenda fix for "org-extend-today-until"
+#+begin_src emacs-lisp
+(defun aragaer/get-time-of-day (item)
+  (org-find-text-property-in-string 'time-of-day item))
+
+(defun aragaer/item-before-extend (item)
+  (let ((time-of-day (aragaer/get-time-of-day item))
+        (today-until-minutes (* 60 org-extend-today-until)))
+    (if time-of-day
+        (< time-of-day today-until-minutes)
+      t)))
+
+(defun aragaer/item-after-extend (item)
+  (let ((time-of-day (aragaer/get-time-of-day item))
+        (today-until-minutes (* 60 org-extend-today-until)))
+    (if time-of-day
+        (> time-of-day today-until-minutes)
+      t)))
+
+;; функция, которая собирает "таймстампы на сегодня" с учетом org-extend-today-until
+;; ее надо адвайсом совать вместо стандартной org-agenda-get-timestamps
+(defun aragaer/org-agenda-get-timestamps-today (orig-func &rest args)
+  (let* ((dayn (calendar-absolute-from-gregorian date))
+         (day-before (org-date-to-gregorian (1- dayn)))
+         (day-after (org-date-to-gregorian (1+ dayn)))
+         (today-until-minutes (* 60 org-extend-today-until))
+         (orig (apply orig-func args)))
+    (defvar date)
+    (append
+     (cl-remove-if #'aragaer/get-time-of-day orig)
+     (if (< 0 org-extend-today-until)
+         (append
+          (cl-remove-if #'aragaer/item-before-extend orig)
+          (cl-remove-if #'aragaer/item-after-extend
+                        (let ((date day-after))
+                          (apply orig-func args))))
+       (append
+        (cl-remove-if #'aragaer/item-before-extend
+                      (let ((date day-before))
+                        (apply orig-func args)))
+        (cl-remove-if #'aragaer/item-after-extend orig))))))
+
+(advice-add 'org-agenda-get-timestamps
+            :around #'aragaer/org-agenda-get-timestamps-today)
+
+;; Вешаем на строчку "now - - - -" нужную дату
+(defun aragaer/org-agenda-set-now-string-date (agenda-items)
+  (let ((m (regexp-quote org-agenda-current-time-string)))
+    (dolist (item agenda-items agenda-items)
+      (when (string-match-p m item)
+        (org-add-props item nil 'date (calendar-current-date))))))
+(advice-add 'org-agenda-add-time-grid-maybe
+            :filter-return #'aragaer/org-agenda-set-now-string-date)
+
+(defsubst aragaer/get-org-date (i)
+  (let ((prop (get-text-property 1 'date i)))
+    (defvar date)
+    (cond
+     ((numberp prop) prop)
+     (prop (calendar-absolute-from-gregorian prop))
+     (t (calendar-absolute-from-gregorian date)))))
+
+;; сортировка по времени и дате
+(defun aragaer/org-cmp-time-and-date (a b)
+  (let* ((da (aragaer/get-org-date a))
+         (db (aragaer/get-org-date b)))
+    (cond
+     ((< da db) -1)
+     ((< db da) +1)
+     (t (org-cmp-time a b)))))
+
+(setq org-agenda-cmp-user-defined #'aragaer/org-cmp-time-and-date)
+
+(cl-nsubstitute 'user-defined-up 'time-up
+                (alist-get 'agenda org-agenda-sorting-strategy))
+#+end_src
+* Roam tweaks
+** Wrap db update into a single transaction
+Speeds up the save greatly
+#+begin_src emacs-lisp
+(advice-add 'org-roam-db-update-file :around
+              (defun +org-roam-db-update-file (fn &rest args)
+                  (emacsql-with-transaction (org-roam-db)
+                    (apply fn args))))
+
+#+end_src
+** Org-agenda in roam
+#+begin_src emacs-lisp
+(defun aragaer/add-to-agenda-maybe ()
+  (unless (member (buffer-file-name) (org-agenda-files))
+    (org-agenda-file-to-front)))
+
+(defun aragaer/remove-from-agenda-maybe ()
+  (if (member (buffer-file-name) (org-agenda-files))
+      (org-remove-file)))
+
+(defun aragaer/get-filetags ()
+  (split-string (or (cadr (assoc "FILETAGS"
+                                 (org-collect-keywords '("filetags"))))
+                    "")
+                ":" 'omit-nulls))
+
+(defun aragaer/project-update-tag ()
+  "Update PROJECT tag in the current buffer."
+  (let ((tags (aragaer/get-filetags)))
+    (if (vulpea-project-p)
+        (unless (member "project" tags)
+          (org-roam-tag-add '("project")))
+      (when (member "project" tags)
+        (org-roam-tag-remove '("project"))))))
+
+(defun aragaer/update-agenda ()
+  "Add or remove roam file to agenda."
+  (when (and (not (active-minibuffer-window))
+             (org-roam-buffer-p))
+    (save-excursion
+      (goto-char (point-min))
+      (aragaer/project-update-tag)
+      (let ((tags (aragaer/get-filetags)))
+        (if (or (member "agenda" tags)
+                (member "project" tags))
+            (aragaer/add-to-agenda-maybe)
+          (aragaer/remove-from-agenda-maybe))))))
+
+(add-hook 'find-file-hook #'aragaer/update-agenda)
+(add-hook 'before-save-hook #'aragaer/update-agenda)
+
+#+end_src
+*** Roam agenda category
+#+begin_src emacs-lisp
+(setq org-agenda-prefix-format
+      '((agenda . " %i %-12(aragaer/agenda-category)%?-12t% s")
+        (todo . " %i %-12(aragaer/agenda-category) ")
+        (tags . " %i %-12(aragaer/agenda-category) ")
+        (search . " %i %-12(aragaer/agenda-category) ")))
+
+(defun aragaer/agenda-category ()
+  "Get category of item at point for agenda.
+
+Category is defined by one of the following items:
+
+- CATEGORY property
+- TITLE keyword or property for org-roam nodes
+- filename without directory and extension
+
+Usage example:
+
+  (setq org-agenda-prefix-format
+        '((agenda . \" %(aragaer/agenda-category) %?-12t %12s\")))
+
+Refer to `org-agenda-prefix-format' for more information."
+  (let ((file-name (when buffer-file-name
+                     (file-name-sans-extension
+                      (file-name-nondirectory buffer-file-name))))
+        (parent-title (when (org-roam-buffer-p)
+                        (save-excursion
+                          (org-up-heading-or-point-min)
+                          (org-roam-node-title (org-roam-node-at-point)))))
+        (category (org-get-category)))
+    (if (and parent-title
+             (string-equal category file-name))
+        parent-title
+      (or category ""))))
+
+#+end_src
+*** Helper function for determining if roam-file has TODO items in it
+#+begin_src emacs-lisp
+(defun vulpea-project-p ()
+  "Return non-nil if current buffer has any todo entry.
+
+TODO entries marked as done are ignored, meaning the this
+function returns nil if current buffer contains only completed
+tasks."
+  (org-element-map
+      (org-element-parse-buffer 'headline)
+      'headline
+    (lambda (h)
+      (eq (org-element-property :todo-type h)
+          'todo))
+    nil 'first-match))
+#+end_src
+** Do not inherit certain tags
+#+begin_src emacs-lisp
+  (setq org-tags-exclude-from-inheritance
+        (append '("project" "next" "agenda" "here")
+                org-tags-exclude-from-inheritance))
+
+  (defun aragaer/remove-hash-tags (tags)
+    (mapcar
+     (lambda (tag-list)
+       (cl-remove ?# tag-list :key #'string-to-char :test #'char-equal))
+     tags))
+
+  (advice-add 'org-remove-uninherited-tags :filter-args #'aragaer/remove-hash-tags)
+#+end_src
+** Roam daily notes
+#+begin_src emacs-lisp
+(setq org-roam-dailies-directory "daily/")
+
+(setq aragaer/roam-daily-template
+      (combine-and-quote-strings
+       '("#+title: %<%Y-%m-%d>"
+         "#+startup: overview"
+         "#+filetags: @journal"
+         ;""
+         ;"- week :: %(aragaer/this-day-weekly)"
+         ""
+         "* TODO Review journal for %<%Y-%m-%d>")
+       "\n"))
+
+(setq org-roam-dailies-capture-templates
+      `(("d" "default" entry
+         "* %? :review:"
+         :if-new (file+head "%<%Y-%m-%d>.org"
+                            ,aragaer/roam-daily-template))))
+#+end_src
+** Roam weeky/yearly notes (WIP)
+#+begin_src emacs-lisp
+  (defun aragaer/roam-get-or-create (title template)
+    (or (org-roam-node-from-title-or-alias title)
+        (progn
+          (message "creating a node %s" title)
+          (org-roam-capture- :node (org-roam-node-create :title title)
+                             :info `(:title ,title)
+                             :templates `(("d" "default" plain ""
+                                           :target ,template
+                                           :immediate-finish t))
+                             :props '(:finalize find-file))
+          (org-roam-node-from-title-or-alias title))))
+
+    (defun aragaer/this-week-yearly ()
+      (let* ((journal-directory (expand-file-name "journal/" org-roam-directory))
+             (node-name (format-time-string "Year %Y"))
+             (node (aragaer/roam-get-or-create node-name
+                                               `(file+head ,(expand-file-name "%<%Y>.org" journal-directory)
+                                                           "#+title: %{title}\n"))))
+        (org-link-make-string
+         (concat "id:" (org-roam-node-id node))
+         node-name)))
+
+    (defun aragaer/roam-weekly-template (title)
+      (let ((template-path (expand-file-name (locate-user-emacs-file "templates/roam-weekly-template.org"))))
+        (concat "#+title: " title "\n%[" template-path "]")))
+
+    (defun aragaer/this-day-weekly ()
+      (interactive)
+      (let* ((journal-directory (expand-file-name "journal/" org-roam-directory))
+             (node-name (format-time-string "Year %Y week %V"))
+             (filename (expand-file-name "%<%Y-week-%V>.org" journal-directory))
+             (template (aragaer/roam-weekly-template node-name))
+             (node (aragaer/roam-get-or-create node-name
+                                               `(file+head ,filename
+                                                           ,template))))
+        (if node
+            (org-link-make-string
+             (concat "id:" (org-roam-node-id node))
+             (format-time-string "%V"))
+          (progn
+            (message "node %s not created!" node-name)
+            ""))))
+
+    (defun aragaer/this-week-begin-date ()
+      (if (string= "1" (format-time-string "%u"))
+          (format-time-string "%Y-%m-%d")
+        (org-read-date nil nil "-1mon")))
+
+    (defun aragaer/next-week-begin-date ()
+      (if (string= "1" (format-time-string "%u"))
+          (org-read-date nil nil "+7")
+        (org-read-date nil nil "+1mon")))
+
+#+end_src
+** Zettelkasten in roam
+#+begin_src emacs-lisp
+(defun aragaer/zk-node-p (n)
+  (member "ZK" (org-roam-node-tags n)))
+
+(defun aragaer/make-roam-zk-template (tag)
+  (combine-and-quote-strings
+   `("#+title: ${title}"
+     "#+startup: overview"
+     ,(concat "#+filetags: :ZK:" tag ":")
+     "- tags ::"
+     "")
+   "\n"))
+
+(setq aragaer/roam-zk-templates
+  `(("z" "zettel" plain "%?"
+     :target (file+head "zk/%<%Y%m%d%H%M%S>-${slug}.org"
+                        ,(aragaer/make-roam-zk-template "idea"))
+     :unnarrowed t)
+    ("f" "fact" plain "%?"
+     :target (file+head "zk/%<%Y%m%d%H%M%S>-${slug}.org"
+                        ,(aragaer/make-roam-zk-template "fact"))
+     :unnarrowed t)
+    ("r" "reference" plain "%?"
+     :target (file+head "zk/%<%Y%m%d%H%M%S>-${slug}.org"
+                        ,(aragaer/make-roam-zk-template "reference"))
+     :unnarrowed t)
+    ("m" "moc" plain "%?"
+     :target (file+head "zk/${slug}.org"
+                        ,(aragaer/make-roam-zk-template "MOC"))
+     :unnarrowed t)))
+
+(defun aragaer/org-roam-find-zk (&optional keys)
+  (interactive)
+  (org-roam-node-find
+   t "" 'aragaer/zk-node-p
+   :templates aragaer/roam-zk-templates))
+
+(defun aragaer/org-roam-insert-zk (&optional keys)
+  (interactive)
+  (org-roam-node-insert
+   'aragaer/zk-node-p
+   :templates aragaer/roam-zk-templates))
+
+(define-key global-map (kbd "C-c n F") 'aragaer/org-roam-find-zk)
+(define-key org-mode-map (kbd "C-c n I") 'aragaer/org-roam-insert-zk)
 #+end_src

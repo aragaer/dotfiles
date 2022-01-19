@@ -685,7 +685,10 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
 #+END_SRC
 * extra org things
 #+BEGIN_SRC emacs-lisp
-  (let ((org-tweaks-file (locate-user-emacs-file "my-org.org")))
-    (if (file-exists-p org-tweaks-file)
-        (org-babel-load-file org-tweaks-file)))
+  (add-hook 'after-init-hook
+            (defun load-extra-org-stuff ()
+              (message "loading extra stuff...")
+              (let ((org-tweaks-file (locate-user-emacs-file "my-org.org")))
+                (if (file-exists-p org-tweaks-file)
+                    (org-babel-load-file org-tweaks-file)))))
 #+END_SRC
