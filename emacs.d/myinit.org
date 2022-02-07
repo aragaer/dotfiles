@@ -50,14 +50,6 @@ To be able to update lists in /custom/
     (global-font-lock-mode 1)
     (global-auto-revert-mode t)
     (global-unset-key (kbd "C-x C-c"))
-    (add-to-list 'default-frame-alist `(font . ,*preferred-font*))
-    (set-face-attribute 'default nil :font *preferred-font*)
-    (set-face-attribute 'fixed-pitch nil :font *preferred-font*)
-    (when (fboundp 'set-fontset-font)
-      ;; force M+ for japanese glyphs
-      (set-fontset-font t 'han
-                        (font-spec :family "M+ 2p light")
-                        nil 'prepend))
     <<narrow-commands>>
     (setq-default indent-tabs-mode nil)
     (setq show-trailing-whitespace t
@@ -69,9 +61,6 @@ To be able to update lists in /custom/
           initial-scratch-message nil
           sentence-end-double-space nil))
 #+END_SRC
-** fonts
-#+begin_src elisp :noweb yes
-#+end_src
 ** narrow commands
 #+NAME: narrow-commands
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -299,6 +288,7 @@ identifiers.
      '((nil :maxlevel . 3)
        (org-agenda-files :maxlevel . 3)))
     :custom-face
+    (org-agenda-calendar-sexp ((t (:foreground "dark violet" :weight bold))))
     (org-mode-line-clock ((t (:background "grey75" :foreground "red" :box (:line-width -1 :style released-button))))))
 #+END_SRC
 ** calendar
@@ -448,9 +438,6 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
   (use-package org-journal
     :ensure t
     :defer t
-    :init
-    ;; Change default prefix key; needs to be set before loading org-journal
-    (setq org-journal-prefix-key "C-c j")
     :config
     (setq org-journal-dir "~/Dropbox/mind_dump/journal"
           org-journal-file-format "journal-%Y-%m-%d.org")
@@ -524,7 +511,9 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
          (if (> level 0) (concat filetitle " > "))
          (if (> level 1) (concat (string-join olp " > ") " > "))
          title)))
-    (setq org-roam-node-display-template "${hierarchy:*} ${tags:20}")
+    (setq org-roam-node-display-template
+          (concat "${hierarchy:*} "
+                  (propertize "${tags:20}" 'face 'org-tag)))
     (require 'org-roam-dailies))
 #+end_src
 * helpers
@@ -687,7 +676,6 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
 #+BEGIN_SRC emacs-lisp
   (add-hook 'after-init-hook
             (defun load-extra-org-stuff ()
-              (message "loading extra stuff...")
               (let ((org-tweaks-file (locate-user-emacs-file "my-org.org")))
                 (if (file-exists-p org-tweaks-file)
                     (org-babel-load-file org-tweaks-file)))))

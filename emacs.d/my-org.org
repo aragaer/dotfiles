@@ -135,39 +135,39 @@ Speeds up the save greatly
 #+end_src
 *** Roam agenda category
 #+begin_src emacs-lisp
-(setq org-agenda-prefix-format
-      '((agenda . " %i %-12(aragaer/agenda-category)%?-12t% s")
-        (todo . " %i %-12(aragaer/agenda-category) ")
-        (tags . " %i %-12(aragaer/agenda-category) ")
-        (search . " %i %-12(aragaer/agenda-category) ")))
-
-(defun aragaer/agenda-category ()
-  "Get category of item at point for agenda.
-
-Category is defined by one of the following items:
-
-- CATEGORY property
-- TITLE keyword or property for org-roam nodes
-- filename without directory and extension
-
-Usage example:
-
   (setq org-agenda-prefix-format
-        '((agenda . \" %(aragaer/agenda-category) %?-12t %12s\")))
+        '((agenda . " %i %-12(aragaer/agenda-category) %?-12t% s")
+          (todo . " %i %-12(aragaer/agenda-category) ")
+          (tags . " %i %-12(aragaer/agenda-category) ")
+          (search . " %i %-12(aragaer/agenda-category) ")))
 
-Refer to `org-agenda-prefix-format' for more information."
-  (let ((file-name (when buffer-file-name
-                     (file-name-sans-extension
-                      (file-name-nondirectory buffer-file-name))))
-        (parent-title (when (org-roam-buffer-p)
-                        (save-excursion
-                          (org-up-heading-or-point-min)
-                          (org-roam-node-title (org-roam-node-at-point)))))
-        (category (org-get-category)))
-    (if (and parent-title
-             (string-equal category file-name))
-        parent-title
-      (or category ""))))
+  (defun aragaer/agenda-category ()
+    "Get category of item at point for agenda.
+
+  Category is defined by one of the following items:
+
+  - CATEGORY property
+  - TITLE keyword or property for org-roam nodes
+  - filename without directory and extension
+
+  Usage example:
+
+    (setq org-agenda-prefix-format
+          '((agenda . \" %(aragaer/agenda-category) %?-12t %12s\")))
+
+  Refer to `org-agenda-prefix-format' for more information."
+    (let ((file-name (when buffer-file-name
+                       (file-name-sans-extension
+                        (file-name-nondirectory buffer-file-name))))
+          (parent-title (when (org-roam-buffer-p)
+                          (save-excursion
+                            (org-up-heading-or-point-min)
+                            (org-roam-node-title (org-roam-node-at-point)))))
+          (category (org-get-category)))
+      (if (and parent-title
+               (string-equal category file-name))
+          parent-title
+        (or category ""))))
 
 #+end_src
 *** Helper function for determining if roam-file has TODO items in it
@@ -279,48 +279,49 @@ tasks."
 #+end_src
 ** Zettelkasten in roam
 #+begin_src emacs-lisp
-(defun aragaer/zk-node-p (n)
-  (member "ZK" (org-roam-node-tags n)))
+  (defun aragaer/zk-node-p (n)
+    (member "ZK" (org-roam-node-tags n)))
 
-(defun aragaer/make-roam-zk-template (tag)
-  (combine-and-quote-strings
-   `("#+title: ${title}"
-     "#+startup: overview"
-     ,(concat "#+filetags: :ZK:" tag ":")
-     "- tags ::"
-     "")
-   "\n"))
+  (defun aragaer/make-roam-zk-template (tag)
+    (combine-and-quote-strings
+     `("#+title: ${title}"
+       "#+startup: overview"
+       ,(concat "#+filetags: :ZK:" tag ":")
+       "- tags ::"
+       "")
+     "\n"))
 
-(setq aragaer/roam-zk-templates
-  `(("z" "zettel" plain "%?"
-     :target (file+head "zk/%<%Y%m%d%H%M%S>-${slug}.org"
-                        ,(aragaer/make-roam-zk-template "idea"))
-     :unnarrowed t)
-    ("f" "fact" plain "%?"
-     :target (file+head "zk/%<%Y%m%d%H%M%S>-${slug}.org"
-                        ,(aragaer/make-roam-zk-template "fact"))
-     :unnarrowed t)
-    ("r" "reference" plain "%?"
-     :target (file+head "zk/%<%Y%m%d%H%M%S>-${slug}.org"
-                        ,(aragaer/make-roam-zk-template "reference"))
-     :unnarrowed t)
-    ("m" "moc" plain "%?"
-     :target (file+head "zk/${slug}.org"
-                        ,(aragaer/make-roam-zk-template "MOC"))
-     :unnarrowed t)))
+  (setq aragaer/roam-zk-templates
+    `(("z" "zettel" plain "%?"
+       :target (file+head "zk/%<%Y%m%d%H%M%S>-${slug}.org"
+                          ,(aragaer/make-roam-zk-template "idea"))
+       :unnarrowed t)
+      ("f" "fact" plain "%?"
+       :target (file+head "zk/%<%Y%m%d%H%M%S>-${slug}.org"
+                          ,(aragaer/make-roam-zk-template "fact"))
+       :unnarrowed t)
+      ("r" "reference" plain "%?"
+       :target (file+head "zk/%<%Y%m%d%H%M%S>-${slug}.org"
+                          ,(aragaer/make-roam-zk-template "reference"))
+       :unnarrowed t)
+      ("m" "moc" plain "%?"
+       :target (file+head "zk/${slug}.org"
+                          ,(aragaer/make-roam-zk-template "MOC"))
+       :unnarrowed t)))
 
-(defun aragaer/org-roam-find-zk (&optional keys)
-  (interactive)
-  (org-roam-node-find
-   t "" 'aragaer/zk-node-p
-   :templates aragaer/roam-zk-templates))
+  (defun aragaer/org-roam-find-zk (&optional keys)
+    (interactive)
+    (org-roam-node-find
+     t "" 'aragaer/zk-node-p
+     :templates aragaer/roam-zk-templates))
 
-(defun aragaer/org-roam-insert-zk (&optional keys)
-  (interactive)
-  (org-roam-node-insert
-   'aragaer/zk-node-p
-   :templates aragaer/roam-zk-templates))
+  (defun aragaer/org-roam-insert-zk (&optional keys)
+    (interactive)
+    (org-roam-node-insert
+     'aragaer/zk-node-p
+     :templates aragaer/roam-zk-templates))
 
-(define-key global-map (kbd "C-c n F") 'aragaer/org-roam-find-zk)
-(define-key org-mode-map (kbd "C-c n I") 'aragaer/org-roam-insert-zk)
+  (define-key global-map (kbd "C-c n F") 'aragaer/org-roam-find-zk)
+  (define-key org-mode-map (kbd "C-c n I") 'aragaer/org-roam-insert-zk)
 #+end_src
+

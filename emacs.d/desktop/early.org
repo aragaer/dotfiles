@@ -1,6 +1,15 @@
 * font
 #+begin_src elisp
-  (setq *preferred-font* "M+ 1mn-11")
+  (use-package faces
+    :config
+    (when (fboundp 'set-fontset-font)
+      ;; force M+ for japanese glyphs
+      (set-fontset-font t 'han
+                        (font-spec :family "M+ 2p light")
+                        nil 'prepend))
+    :custom-face
+    (fixed-pitch ((t (:family "M+ 1mn"))))
+    (default ((t (:family "M+ 1mn")))))
 #+end_src
 * browsers
 #+begin_src elisp
