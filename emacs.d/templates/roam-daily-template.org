@@ -1,0 +1,7 @@
+:PROPERTIES:
+:CATEGORY: journal
+:END:
+#+filetags: @journal
+#+startup: overview
+
+* TODO Review journal for %<%Y-%m-%d>
