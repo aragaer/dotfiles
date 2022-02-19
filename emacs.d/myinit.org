@@ -480,7 +480,37 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
     :ensure t)
 #+end_src
 ** org-roam
-#+begin_src emacs-lisp
+#+name: roam-node-filetitle
+#+begin_src emacs-lisp :tangle no
+  (cl-defmethod org-roam-node-filetitle ((node org-roam-node))
+    "Return the file TITLE for the node."
+    (org-roam-get-keyword "TITLE" (org-roam-node-file node)))
+#+end_src
+#+name: roam-node-hierarchy
+#+begin_src emacs-lisp :tangle no
+  (cl-defmethod org-roam-node-hierarchy ((node org-roam-node))
+    "Return the hierarchy for the node."
+    (let ((title (org-roam-node-title node))
+          (olp (org-roam-node-olp node))
+          (level (org-roam-node-level node))
+          (filetitle (org-roam-node-filetitle node)))
+      (concat
+       (if (> level 0) (concat filetitle " > "))
+       (if (> level 1) (concat (string-join olp " > ") " > "))
+       title)))
+#+end_src
+#+name: roam-node-type
+#+begin_src emacs-lisp :tangle no
+  (cl-defmethod org-roam-node-type ((node org-roam-node))
+    "Return the TYPE of NODE."
+    (condition-case nil
+        (file-name-nondirectory
+         (directory-file-name
+          (file-name-directory
+           (file-relative-name (org-roam-node-file node) org-roam-directory))))
+      (error "")))
+#+end_src
+#+begin_src emacs-lisp :noweb yes
   (use-package org-roam
     :ensure t
     :hook
@@ -488,6 +518,10 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
     :custom
     (org-roam-directory (file-truename "~/Dropbox/org/roam/"))
     (org-roam-db-update-method 'immediate)
+    (org-roam-node-display-template
+     (concat (propertize "${type:15}" 'face 'org-tag)
+             "${hierarchy:*} "
+             (propertize "${tags:20}" 'face 'org-tag)))
     :bind ((("C-c n l" . org-roam-buffer-toggle)
             ("C-c n c" . org-roam-capture)
             ("C-c n f" . org-roam-node-find)
@@ -497,23 +531,11 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
             ("C-c n w" . org-roam-refile)))
     :init
     (setq org-roam-v2-ack t)
+    (setq slipboxes '("unsorted" "zk"))
     :config
-    (cl-defmethod org-roam-node-filetitle ((node org-roam-node))
-      "Return the file TITLE for the node."
-      (org-roam-get-keyword "TITLE" (org-roam-node-file node)))
-    (cl-defmethod org-roam-node-hierarchy ((node org-roam-node))
-      "Return the hierarchy for the node."
-      (let ((title (org-roam-node-title node))
-            (olp (org-roam-node-olp node))
-            (level (org-roam-node-level node))
-            (filetitle (org-roam-node-filetitle node)))
-        (concat
-         (if (> level 0) (concat filetitle " > "))
-         (if (> level 1) (concat (string-join olp " > ") " > "))
-         title)))
-    (setq org-roam-node-display-template
-          (concat "${hierarchy:*} "
-                  (propertize "${tags:20}" 'face 'org-tag)))
+    <<roam-node-filetitle>>
+    <<roam-node-hierarchy>>
+    <<roam-node-type>>
     (require 'org-roam-dailies))
 #+end_src
 * helpers

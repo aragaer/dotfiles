@@ -274,34 +274,22 @@ tasks."
 ** Zettelkasten in roam
 #+begin_src emacs-lisp
   (defun aragaer/zk-node-p (n)
-    (member "ZK" (org-roam-node-tags n)))
+    (member (org-roam-node-type n) slipboxes))
 
-  (defun aragaer/make-roam-zk-template (tag)
-    (combine-and-quote-strings
-     `("#+title: ${title}"
-       "#+startup: overview"
-       ,(concat "#+filetags: :ZK:" tag ":")
-       "- tags ::"
-       "")
-     "\n"))
+  (setq roam-zk-template
+        `(file+head "unsorted/%<%Y%m%d%H%M%S>-${slug}.org"
+                    ,(combine-and-quote-strings
+                      `("#+title: ${title}"
+                        "#+startup: showall"
+                        "#+filetags:"
+                        "")
+                      "\n")))
 
   (setq aragaer/roam-zk-templates
-    `(("z" "zettel" plain "%?"
-       :target (file+head "zk/%<%Y%m%d%H%M%S>-${slug}.org"
-                          ,(aragaer/make-roam-zk-template "idea"))
-       :unnarrowed t)
-      ("f" "fact" plain "%?"
-       :target (file+head "zk/%<%Y%m%d%H%M%S>-${slug}.org"
-                          ,(aragaer/make-roam-zk-template "fact"))
-       :unnarrowed t)
-      ("r" "reference" plain "%?"
-       :target (file+head "zk/%<%Y%m%d%H%M%S>-${slug}.org"
-                          ,(aragaer/make-roam-zk-template "reference"))
-       :unnarrowed t)
-      ("m" "moc" plain "%?"
-       :target (file+head "zk/${slug}.org"
-                          ,(aragaer/make-roam-zk-template "MOC"))
-       :unnarrowed t)))
+        `(("z" "zettel" plain "%?"
+           :if-new ,roam-zk-template
+           :immediate-finish t
+           :unnarrowed t)))
 
   (defun aragaer/org-roam-find-zk (&optional keys)
     (interactive)
