@@ -1,4 +1,5 @@
 #+STARTUP: overview
+
 * Function to add hline to any table
 #+begin_src emacs-lisp
   (defun org--add-hline (data)
@@ -6,90 +7,99 @@
         (cons (car data) (cons 'hline (cdr data)))))
 #+end_src
 * Agenda fix for "org-extend-today-until"
+** Helper functions
+Functions to check if item is before or after the "extend-today-until"
+timestamp.
 #+begin_src emacs-lisp
-(defun aragaer/get-time-of-day (item)
-  (org-find-text-property-in-string 'time-of-day item))
+  (defun aragaer/get-time-of-day (item)
+    (org-find-text-property-in-string 'time-of-day item))
 
-(defun aragaer/item-before-extend (item)
-  (let ((time-of-day (aragaer/get-time-of-day item))
-        (today-until-minutes (* 60 org-extend-today-until)))
-    (if time-of-day
-        (< time-of-day today-until-minutes)
-      t)))
+  (defun aragaer/item-before-extend (item)
+    (let ((time-of-day (aragaer/get-time-of-day item))
+          (today-until-minutes (* 60 org-extend-today-until)))
+      (if time-of-day
+          (< time-of-day today-until-minutes)
+        t)))
 
-(defun aragaer/item-after-extend (item)
-  (let ((time-of-day (aragaer/get-time-of-day item))
-        (today-until-minutes (* 60 org-extend-today-until)))
-    (if time-of-day
-        (> time-of-day today-until-minutes)
-      t)))
-
-;; функция, которая собирает "таймстампы на сегодня" с учетом org-extend-today-until
-;; ее надо адвайсом совать вместо стандартной org-agenda-get-timestamps
-(defun aragaer/org-agenda-get-timestamps-today (orig-func &rest args)
-  (let* ((dayn (calendar-absolute-from-gregorian date))
-         (day-before (org-date-to-gregorian (1- dayn)))
-         (day-after (org-date-to-gregorian (1+ dayn)))
-         (today-until-minutes (* 60 org-extend-today-until))
-         (orig (apply orig-func args)))
-    (defvar date)
-    (append
-     (cl-remove-if #'aragaer/get-time-of-day orig)
-     (if (< 0 org-extend-today-until)
+  (defun aragaer/item-after-extend (item)
+    (let ((time-of-day (aragaer/get-time-of-day item))
+          (today-until-minutes (* 60 org-extend-today-until)))
+      (if time-of-day
+          (> time-of-day today-until-minutes)
+        t)))
+#+end_src
+** Collect timestamps for "today" with respect to "extend-today-until"
+Instead of getting items for just one date it collects items for two
+consecutive dates and filters out the ones outside the required
+interval.
+#+begin_src emacs-lisp
+  (defun aragaer/org-agenda-get-timestamps-today (orig-func &rest args)
+    (let* ((dayn (calendar-absolute-from-gregorian date))
+           (day-before (org-date-to-gregorian (1- dayn)))
+           (day-after (org-date-to-gregorian (1+ dayn)))
+           (today-until-minutes (* 60 org-extend-today-until))
+           (orig (apply orig-func args)))
+      (defvar date)
+      (append
+       (cl-remove-if #'aragaer/get-time-of-day orig)
+       (if (< 0 org-extend-today-until)
+           (append
+            (cl-remove-if #'aragaer/item-before-extend orig)
+            (cl-remove-if #'aragaer/item-after-extend
+                          (let ((date day-after))
+                            (apply orig-func args))))
          (append
-          (cl-remove-if #'aragaer/item-before-extend orig)
-          (cl-remove-if #'aragaer/item-after-extend
-                        (let ((date day-after))
-                          (apply orig-func args))))
-       (append
-        (cl-remove-if #'aragaer/item-before-extend
-                      (let ((date day-before))
-                        (apply orig-func args)))
-        (cl-remove-if #'aragaer/item-after-extend orig))))))
+          (cl-remove-if #'aragaer/item-before-extend
+                        (let ((date day-before))
+                          (apply orig-func args)))
+          (cl-remove-if #'aragaer/item-after-extend orig))))))
 
-(advice-add 'org-agenda-get-timestamps
-            :around #'aragaer/org-agenda-get-timestamps-today)
+  (advice-add 'org-agenda-get-timestamps
+              :around #'aragaer/org-agenda-get-timestamps-today)
+#+end_src
+** Assign correct date to the "now" entry
+#+begin_src emacs-lisp
+  (defun aragaer/org-agenda-set-now-string-date (agenda-items)
+    (let ((m (regexp-quote org-agenda-current-time-string)))
+      (dolist (item agenda-items agenda-items)
+        (when (string-match-p m item)
+          (org-add-props item nil 'date (calendar-current-date))))))
 
-;; Вешаем на строчку "now - - - -" нужную дату
-(defun aragaer/org-agenda-set-now-string-date (agenda-items)
-  (let ((m (regexp-quote org-agenda-current-time-string)))
-    (dolist (item agenda-items agenda-items)
-      (when (string-match-p m item)
-        (org-add-props item nil 'date (calendar-current-date))))))
-(advice-add 'org-agenda-add-time-grid-maybe
-            :filter-return #'aragaer/org-agenda-set-now-string-date)
+  (advice-add 'org-agenda-add-time-grid-maybe
+              :filter-return #'aragaer/org-agenda-set-now-string-date)
+#+end_src
+** Sort entries by both time and date
+Default sort is by time only.
+#+begin_src emacs-lisp
+  (defsubst aragaer/get-org-date (i)
+    (let ((prop (get-text-property 1 'date i)))
+      (defvar date)
+      (cond
+       ((numberp prop) prop)
+       (prop (calendar-absolute-from-gregorian prop))
+       (t (calendar-absolute-from-gregorian date)))))
 
-(defsubst aragaer/get-org-date (i)
-  (let ((prop (get-text-property 1 'date i)))
-    (defvar date)
-    (cond
-     ((numberp prop) prop)
-     (prop (calendar-absolute-from-gregorian prop))
-     (t (calendar-absolute-from-gregorian date)))))
+  (defun aragaer/org-cmp-time-and-date (a b)
+    (let* ((da (aragaer/get-org-date a))
+           (db (aragaer/get-org-date b)))
+      (cond
+       ((< da db) -1)
+       ((< db da) +1)
+       (t (org-cmp-time a b)))))
 
-;; сортировка по времени и дате
-(defun aragaer/org-cmp-time-and-date (a b)
-  (let* ((da (aragaer/get-org-date a))
-         (db (aragaer/get-org-date b)))
-    (cond
-     ((< da db) -1)
-     ((< db da) +1)
-     (t (org-cmp-time a b)))))
+  (setq org-agenda-cmp-user-defined #'aragaer/org-cmp-time-and-date)
 
-(setq org-agenda-cmp-user-defined #'aragaer/org-cmp-time-and-date)
-
-(cl-nsubstitute 'user-defined-up 'time-up
-                (alist-get 'agenda org-agenda-sorting-strategy))
+  (cl-nsubstitute 'user-defined-up 'time-up
+                  (alist-get 'agenda org-agenda-sorting-strategy))
 #+end_src
 * Roam tweaks
 ** Wrap db update into a single transaction
 Speeds up the save greatly
 #+begin_src emacs-lisp
-(advice-add 'org-roam-db-update-file :around
-              (defun +org-roam-db-update-file (fn &rest args)
-                  (emacsql-with-transaction (org-roam-db)
-                    (apply fn args))))
-
+  (advice-add 'org-roam-db-update-file :around
+                (defun +org-roam-db-update-file (fn &rest args)
+                    (emacsql-with-transaction (org-roam-db)
+                      (apply fn args))))
 #+end_src
 ** Org-agenda in roam
 #+begin_src emacs-lisp
@@ -274,7 +284,10 @@ tasks."
 ** Zettelkasten in roam
 #+begin_src emacs-lisp
   (defun aragaer/zk-node-p (n)
-    (member (org-roam-node-type n) slipboxes))
+    (member (org-roam-node-type n) (mapcar (lambda (x)
+                                             (if (listp x)
+                                                 (car x)
+                                               x)) slipboxes)))
 
   (setq roam-zk-template
         `(file+head "unsorted/%<%Y%m%d%H%M%S>-${slug}.org"

@@ -480,12 +480,15 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
     :ensure t)
 #+end_src
 ** org-roam
+*** additional node methods
+**** filetitle
 #+name: roam-node-filetitle
 #+begin_src emacs-lisp :tangle no
   (cl-defmethod org-roam-node-filetitle ((node org-roam-node))
     "Return the file TITLE for the node."
     (org-roam-get-keyword "TITLE" (org-roam-node-file node)))
 #+end_src
+**** hierarchy
 #+name: roam-node-hierarchy
 #+begin_src emacs-lisp :tangle no
   (cl-defmethod org-roam-node-hierarchy ((node org-roam-node))
@@ -499,6 +502,7 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
        (if (> level 1) (concat (string-join olp " > ") " > "))
        title)))
 #+end_src
+**** node type
 #+name: roam-node-type
 #+begin_src emacs-lisp :tangle no
   (cl-defmethod org-roam-node-type ((node org-roam-node))
@@ -510,6 +514,7 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
            (file-relative-name (org-roam-node-file node) org-roam-directory))))
       (error "")))
 #+end_src
+*** use-package
 #+begin_src emacs-lisp :noweb yes
   (use-package org-roam
     :ensure t
