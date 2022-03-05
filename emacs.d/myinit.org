@@ -36,7 +36,8 @@ To be able to update lists in /custom/
 #+end_src
 * load early local settings
 #+BEGIN_SRC emacs-lisp
-  (let ((local-org-settings-file (locate-user-emacs-file "early-local.org")))
+  (let ((local-org-settings-file (locate-user-emacs-file "early-local.org"))
+        (vc-follow-symlinks t))
     (if (file-exists-p local-org-settings-file)
         (org-babel-load-file local-org-settings-file)))
 #+END_SRC
