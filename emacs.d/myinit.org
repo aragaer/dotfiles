@@ -481,13 +481,6 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
 #+end_src
 ** org-roam
 *** additional node methods
-**** filetitle
-#+name: roam-node-filetitle
-#+begin_src emacs-lisp :tangle no
-  (cl-defmethod org-roam-node-filetitle ((node org-roam-node))
-    "Return the file TITLE for the node."
-    (org-roam-get-keyword "TITLE" (org-roam-node-file node)))
-#+end_src
 **** hierarchy
 #+name: roam-node-hierarchy
 #+begin_src emacs-lisp :tangle no
@@ -496,7 +489,7 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
     (let ((title (org-roam-node-title node))
           (olp (org-roam-node-olp node))
           (level (org-roam-node-level node))
-          (filetitle (org-roam-node-filetitle node)))
+          (filetitle (org-roam-node-file-title node)))
       (concat
        (if (> level 0) (concat filetitle " > "))
        (if (> level 1) (concat (string-join olp " > ") " > "))
@@ -538,7 +531,6 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
     (setq org-roam-v2-ack t)
     (setq slipboxes '("unsorted" "zk"))
     :config
-    <<roam-node-filetitle>>
     <<roam-node-hierarchy>>
     <<roam-node-type>>
     (require 'org-roam-dailies))
