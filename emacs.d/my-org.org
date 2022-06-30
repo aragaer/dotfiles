@@ -103,45 +103,46 @@ Speeds up the save greatly
 #+end_src
 ** Org-agenda in roam
 #+begin_src emacs-lisp
-(defun aragaer/add-to-agenda-maybe ()
-  (unless (member (buffer-file-name) (org-agenda-files))
-    (org-agenda-file-to-front)))
+  (defun aragaer/add-to-agenda-maybe ()
+    (unless (member (buffer-file-name) (org-agenda-files))
+      (org-agenda-file-to-front)))
 
-(defun aragaer/remove-from-agenda-maybe ()
-  (if (member (buffer-file-name) (org-agenda-files))
-      (org-remove-file)))
+  (defun aragaer/remove-from-agenda-maybe (&optional filename)
+    (let ((filename (or filename (buffer-file-name))))
+      (if (member filename (org-agenda-files))
+          (org-remove-file filename))))
 
-(defun aragaer/get-filetags ()
-  (split-string (or (cadr (assoc "FILETAGS"
-                                 (org-collect-keywords '("filetags"))))
-                    "")
-                ":" 'omit-nulls))
+  (defun aragaer/get-filetags ()
+    (split-string (or (cadr (assoc "FILETAGS"
+                                   (org-collect-keywords '("filetags"))))
+                      "")
+                  ":" 'omit-nulls))
 
-(defun aragaer/project-update-tag ()
-  "Update PROJECT tag in the current buffer."
-  (let ((tags (aragaer/get-filetags)))
-    (if (vulpea-project-p)
-        (unless (member "project" tags)
-          (org-roam-tag-add '("project")))
-      (when (member "project" tags)
-        (org-roam-tag-remove '("project"))))))
+  (defun aragaer/project-update-tag ()
+    "Update PROJECT tag in the current buffer."
+    (let ((tags (aragaer/get-filetags)))
+      (if (vulpea-project-p)
+          (unless (member "project" tags)
+            (org-roam-tag-add '("project")))
+        (when (member "project" tags)
+          (org-roam-tag-remove '("project"))))))
 
-(defun aragaer/update-agenda ()
-  "Add or remove roam file to agenda."
-  (when (and (not (active-minibuffer-window))
-             (org-roam-buffer-p))
-    (save-excursion
-      (goto-char (point-min))
-      (aragaer/project-update-tag)
-      (let ((tags (aragaer/get-filetags)))
-        (if (or (member "agenda" tags)
-                (member "project" tags))
-            (aragaer/add-to-agenda-maybe)
-          (aragaer/remove-from-agenda-maybe))))))
+  (defun aragaer/update-agenda ()
+    "Add or remove roam file to agenda."
+    (when (and (not (active-minibuffer-window))
+               (fboundp 'org-roam-buffer-p)
+               (org-roam-buffer-p))
+      (save-excursion
+        (goto-char (point-min))
+        (aragaer/project-update-tag)
+        (let ((tags (aragaer/get-filetags)))
+          (if (or (member "agenda" tags)
+                  (member "project" tags))
+              (aragaer/add-to-agenda-maybe)
+            (aragaer/remove-from-agenda-maybe))))))
 
-(add-hook 'find-file-hook #'aragaer/update-agenda)
-(add-hook 'before-save-hook #'aragaer/update-agenda)
-
+  (add-hook 'find-file-hook #'aragaer/update-agenda)
+  (add-hook 'before-save-hook #'aragaer/update-agenda)
 #+end_src
 *** Roam agenda category
 #+begin_src emacs-lisp
@@ -178,7 +179,6 @@ Speeds up the save greatly
                (string-equal category file-name))
           parent-title
         (or category ""))))
-
 #+end_src
 *** Helper function for determining if roam-file has TODO items in it
 #+begin_src emacs-lisp
@@ -199,7 +199,7 @@ tasks."
 ** Do not inherit certain tags
 #+begin_src emacs-lisp
   (setq org-tags-exclude-from-inheritance
-        (append '("project" "next" "agenda" "here")
+        (append '("project" "next" "agenda" "here" "ATTACH")
                 org-tags-exclude-from-inheritance))
 
   (defun aragaer/remove-hash-tags (tags)
@@ -294,20 +294,19 @@ tasks."
                     ,(combine-and-quote-strings
                       `("#+title: ${title}"
                         "#+startup: showall"
-                        "#+filetags:"
                         "")
                       "\n")))
 
   (setq aragaer/roam-zk-templates
         `(("z" "zettel" plain "%?"
-           :if-new ,roam-zk-template
+           :target ,roam-zk-template
            :immediate-finish t
            :unnarrowed t)))
 
   (defun aragaer/org-roam-find-zk (&optional keys)
     (interactive)
     (org-roam-node-find
-     t "" 'aragaer/zk-node-p
+     t "" #'aragaer/zk-node-p nil
      :templates aragaer/roam-zk-templates))
 
   (defun aragaer/org-roam-insert-zk (&optional keys)
@@ -318,5 +317,16 @@ tasks."
 
   (define-key global-map (kbd "C-c n F") 'aragaer/org-roam-find-zk)
   (define-key org-mode-map (kbd "C-c n I") 'aragaer/org-roam-insert-zk)
+  (define-key global-map (kbd "C-c n s")
+    (defun aragaer/org-roam-find-slipbox ()
+      (interactive)
+      (let* ((org-roam-node-display-template "${title:*} ${context-tag:10}")
+             (node (org-roam-node-read
+                   "" (lambda (n)
+                        (member "#slipbox" (org-roam-node-tags n)))
+                   nil t "Open slipbox: ")))
+        (if (org-roam-node-file node)
+            (org-roam-node-visit node nil)
+          (message "Slipbox file not found for %s" (org-roam-node-title node))))))
 #+end_src
 

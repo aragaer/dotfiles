@@ -60,7 +60,8 @@ To be able to update lists in /custom/
           inhibit-startup-screen t
           frame-inhibit-implied-resize t
           initial-scratch-message nil
-          sentence-end-double-space nil))
+          sentence-end-double-space nil
+          extended-command-suggest-shorter nil))
 #+END_SRC
 ** narrow commands
 #+NAME: narrow-commands
@@ -94,13 +95,7 @@ To be able to update lists in /custom/
   (use-package evil
     :ensure t
     :config
-    (evil-mode)
     (fset 'evil-visual-update-x-selection 'ignore)
-    (evil-set-initial-state 'prog-mode 'normal)
-    (evil-set-initial-state 'fundamental-mode 'normal)
-    (evil-set-initial-state 'text-mode 'normal)
-    (evil-set-initial-state 'picture-mode 'emacs)
-    (evil-set-initial-state 'comint-mode 'emacs)
     :custom
     (evil-undo-system 'undo-tree)
     (evil-search-module 'evil-search)
@@ -120,7 +115,8 @@ identifiers.
 #+begin_src emacs-lisp
   (use-package undo-tree
     :ensure t
-    :config (global-undo-tree-mode t))
+    :config (global-undo-tree-mode t)
+    :custom (undo-tree-auto-save-history nil))
 #+end_src
 * org
 ** capture templates
@@ -272,7 +268,8 @@ identifiers.
     <<org-habits-custom>>
     <<agenda-custom>>
     <<my-org-capture-templates>>
-    (org-use-sub-superscripts nil)
+    (org-image-actual-width '(500))
+    (org-export-with-sub-superscripts nil)
     (org-blank-before-new-entry '((heading . nil) (plain-list-item . nil)))
     (org-confirm-babel-evaluate nil)
     (org-enforce-todo-dependencies t)
@@ -288,6 +285,7 @@ identifiers.
     (org-refile-targets
      '((nil :maxlevel . 3)
        (org-agenda-files :maxlevel . 3)))
+    (org-capture-bookmark nil)
     :custom-face
     (org-agenda-calendar-sexp ((t (:foreground "dark violet" :weight bold))))
     (org-mode-line-clock ((t (:background "grey75" :foreground "red" :box (:line-width -1 :style released-button))))))
@@ -298,18 +296,6 @@ identifiers.
     :ensure nil
     :commands (calendar)
     :custom (calendar-week-start-day 1))
-#+END_SRC
-** evil
-#+BEGIN_SRC emacs-lisp
-  (use-package evil-org
-    :ensure t
-    :after org
-    :config
-    (add-hook 'org-capture-mode-hook #'evil-insert-state)
-    (add-hook 'org-mode-hook #'evil-org-mode)
-    (add-hook 'evil-org-mode-hook
-              (lambda ()
-                (evil-org-set-key-theme))))
 #+END_SRC
 ** checklist
 #+BEGIN_SRC emacs-lisp
@@ -324,10 +310,11 @@ Unless it was open before archiving
            (afile (car location))
            (abuffer (get-file-buffer afile)))
       (apply orig-func r)
-      (when (not abuffer)
+      (unless abuffer
         (let ((abuffer (get-file-buffer afile)))
-          (save-some-buffers t abuffer)
-          (kill-buffer abuffer)))))
+          (when abuffer
+              (save-some-buffers t abuffer)
+              (kill-buffer abuffer))))))
 
   (advice-add 'org-archive-subtree :around #'aragaer/auto-close-archive)
 #+END_SRC
@@ -337,7 +324,11 @@ Also close all agenda files that were opened when updating org-id locations.
   (defun aragaer/close-after-id-update (orig-func &rest r)
     (let ((to-close (seq-remove #'get-file-buffer (org-agenda-files t org-id-search-archives))))
       (apply orig-func r)
-      (mapcar (lambda (f) (kill-buffer (get-file-buffer f))) to-close)))
+      (mapcar (lambda (f)
+                (let ((abuffer (get-file-buffer f)))
+                  (if abuffer
+                      (kill-buffer abuffer))))
+              to-close)))
 
   (advice-add 'org-id-update-id-locations :around #'aragaer/close-after-id-update)
 #+end_src
@@ -508,6 +499,15 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
            (file-relative-name (org-roam-node-file node) org-roam-directory))))
       (error "")))
 #+end_src
+**** node context tags
+#+name: roam-node-context-tags
+#+begin_src emacs-lisp :tangle no
+  (cl-defmethod org-roam-node-context-tag ((node org-roam-node))
+    "Return the @tags of NODE."
+    (cl-find ?@ (org-roam-node-tags node)
+             :key #'string-to-char
+             :test #'char-equal))
+#+end_src
 *** use-package
 #+begin_src emacs-lisp :noweb yes
   (use-package org-roam
@@ -530,10 +530,12 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
             ("C-c n w" . org-roam-refile)))
     :init
     (setq org-roam-v2-ack t)
-    (setq slipboxes '("unsorted" "zk"))
+    (setq slipboxes '("unsorted" "zk" "projects" "services"))
     :config
     <<roam-node-hierarchy>>
     <<roam-node-type>>
+    <<roam-node-context-tags>>
+    (push "ZK_TAGS" (cdr (assoc 'node-property org-roam-db-extra-links-exclude-keys)))
     (require 'org-roam-dailies))
 #+end_src
 * helpers
@@ -629,6 +631,7 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
      '((display-buffer-reuse-window display-buffer-use-some-window)))
     (telega-voice-chat-display '())
     (telega-server-libs-prefix (expand-file-name "~/.local/td"))
+    (telega-webpage-preview-description-limit 80)
     :custom-face
     (telega-chat-inline-reply ((t (:inherit 'font-lock-comment-face))))
     (telega-chat-user-title ((t (:inherit 'font-lock-function-name-face))))
