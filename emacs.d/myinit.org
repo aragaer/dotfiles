@@ -61,7 +61,8 @@ To be able to update lists in /custom/
           frame-inhibit-implied-resize t
           initial-scratch-message nil
           sentence-end-double-space nil
-          extended-command-suggest-shorter nil))
+          extended-command-suggest-shorter nil
+          select-enable-primary t))
 #+END_SRC
 ** narrow commands
 #+NAME: narrow-commands
@@ -384,7 +385,7 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
     ("M-T" . reverse-im-translate-word)
     :custom
     (reverse-im-char-fold t)
-    (reverse-im-read-char-advice-function #'reverse-im-read-char-include)
+    ;(reverse-im-read-char-advice-function #'reverse-im-read-char-include)
     (reverse-im-input-methods '("russian-computer"))
     :config
     (reverse-im-mode t))
@@ -519,7 +520,7 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
     (org-roam-db-update-method 'immediate)
     (org-roam-node-display-template
      (concat (propertize "${type:15}" 'face 'org-tag)
-             "${hierarchy:*} "
+             "${title:*} "
              (propertize "${tags:20}" 'face 'org-tag)))
     :bind ((("C-c n l" . org-roam-buffer-toggle)
             ("C-c n c" . org-roam-capture)
@@ -614,6 +615,16 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
   (with-eval-after-load 'ivy
     (add-to-list 'ivy-ignore-buffers #'telega/ignore-chatbuf))
 
+  (defun aragaer--telega+avy-goto (&optional arg)
+    (interactive "P")
+    (if arg
+        (avy-goto-char-timer)
+      (let ((avy-action-oneshot (lambda (arg)
+                                  (if (eq major-mode 'telega-root-mode)
+                                      (push-button arg)
+                                    (avy-action-goto arg)))))
+        (avy-goto-char-timer))))
+
   (use-package telega
     :ensure t
     :bind
@@ -621,7 +632,9 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
           :prefix-map telega-map
           :prefix "t"
           ("t" . telega)
-          ("c" . telega-chat-with))
+          ("c" . telega-chat-with)
+    :map telega-chat-mode-map
+          ("C-'" . aragaer--telega+avy-goto))
     :custom
     (telega-use-images t)
     (telega-completing-read-function #'ivy-completing-read)
