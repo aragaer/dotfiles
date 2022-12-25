@@ -173,7 +173,8 @@ Speeds up the save greatly
           (parent-title (when (org-roam-buffer-p)
                           (save-excursion
                             (org-up-heading-or-point-min)
-                            (org-roam-node-title (org-roam-node-at-point)))))
+                            (let ((node (org-roam-node-at-point)))
+                              (and node (org-roam-node-title node))))))
           (category (org-get-category)))
       (if (and parent-title
                (string-equal category file-name))
@@ -216,7 +217,6 @@ tasks."
 
   (setq aragaer/roam-daily-template
         (let ((template-path (expand-file-name (locate-user-emacs-file "templates/roam-daily-template.org"))))
-
           (concat "%[" template-path "]")))
 
   (setq org-roam-dailies-capture-templates

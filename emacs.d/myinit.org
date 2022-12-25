@@ -242,7 +242,6 @@ identifiers.
 ** after init hook
 #+name: org-after-init
 #+begin_src emacs-lisp :tangle no
-  (setq org-startup-indented t)
   (define-key org-mode-map (kbd "<C-tab>") 'vimacs/org-narrow-to-subtree)
   (define-key org-mode-map (kbd "<M-tab>") 'vimacs/org-widen-from-subtree)
 #+end_src
@@ -287,6 +286,7 @@ identifiers.
      '((nil :maxlevel . 3)
        (org-agenda-files :maxlevel . 3)))
     (org-capture-bookmark nil)
+    (org-startup-indented t)
     :custom-face
     (org-agenda-calendar-sexp ((t (:foreground "dark violet" :weight bold))))
     (org-mode-line-clock ((t (:background "grey75" :foreground "red" :box (:line-width -1 :style released-button))))))
