@@ -213,17 +213,18 @@ tasks."
 #+end_src
 ** Roam daily notes
 #+begin_src emacs-lisp
-  (setq org-roam-dailies-directory "daily/")
+    (setq org-roam-dailies-directory "daily/")
 
-  (setq aragaer/roam-daily-template
-        (let ((template-path (expand-file-name (locate-user-emacs-file "templates/roam-daily-template.org"))))
-          (concat "%[" template-path "]")))
+    (setq aragaer/roam-daily-template
+          (let ((template-path (expand-file-name (locate-user-emacs-file "templates/roam-daily-template.org"))))
+            (concat "%[" template-path "]")
+            ))
 
-  (setq org-roam-dailies-capture-templates
-        `(("d" "default" entry
-           "* %? :review:"
-           :target (file+head "%<%Y-%m-%d>.org"
-                              ,aragaer/roam-daily-template))))
+    (setq org-roam-dailies-capture-templates
+          `(("d" "default" entry
+             "* %? :review:"
+             :target (file+head "%<%Y-%m-%d>.org"
+                                ,aragaer/roam-daily-template))))
 #+end_src
 ** Roam weeky/yearly notes (WIP)
 #+begin_src emacs-lisp
