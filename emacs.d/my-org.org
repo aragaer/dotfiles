@@ -120,12 +120,17 @@ Speeds up the save greatly
 
   (defun aragaer/project-update-tag ()
     "Update PROJECT tag in the current buffer."
-    (let ((tags (aragaer/get-filetags)))
-      (if (vulpea-project-p)
-          (unless (member "project" tags)
-            (org-roam-tag-add '("project")))
-        (when (member "project" tags)
-          (org-roam-tag-remove '("project"))))))
+    (condition-case err
+        (let ((has-tag (member "project" (aragaer/get-filetags)))
+              (is-project (vulpea-project-p)))
+          (cond
+           ((and is-project (not has-tag)) (org-roam-tag-add '("project")))
+           ((and (not is-project) has-tag) (org-roam-tag-remove '("project")))))
+      (user-error (if (not (org-roam-node-at-point))
+                      (user-error (concat "File "
+                                          (buffer-file-name)
+                                          " is not a roam node"))
+                    (signal (car err) (cdr err))))))
 
   (defun aragaer/update-agenda ()
     "Add or remove roam file to agenda."
