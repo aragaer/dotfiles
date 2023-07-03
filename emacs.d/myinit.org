@@ -520,7 +520,7 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
 #+begin_src emacs-lisp :tangle no
   (cl-defmethod org-roam-node-context-tag ((node org-roam-node))
     "Return the @tags of NODE."
-    (cl-find ?@ (org-roam-node-tags node)
+    (cl-find ?@ (reverse (org-roam-node-tags node))
              :key #'string-to-char
              :test #'char-equal))
 #+end_src
@@ -660,6 +660,7 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
     (telega-voice-chat-display '())
     (telega-server-libs-prefix (expand-file-name "~/.local/td"))
     (telega-webpage-preview-description-limit 80)
+    (telega-video-player-command "mpv")
     :custom-face
     (telega-chat-inline-reply ((t (:inherit 'font-lock-comment-face))))
     (telega-chat-user-title ((t (:inherit 'font-lock-function-name-face))))

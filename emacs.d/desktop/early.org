@@ -13,5 +13,7 @@
 #+end_src
 * browsers
 #+begin_src elisp
-  (setq *browsers* '("firefox-bin" "google-chrome-stable"))
+  (setq *browsers* '("firefox-bin"
+                     "google-chrome-stable"
+                     "firefox-anon"))
 #+end_src
