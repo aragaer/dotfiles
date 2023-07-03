@@ -488,17 +488,32 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
        (if (> level 1) (concat (string-join olp " > ") " > "))
        title)))
 #+end_src
+**** node container type
+#+name: roam-node-container-type
+#+begin_src elisp :tangle no
+  (cl-defmethod org-roam-node-container-type ((node org-roam-node))
+    (when-let ((res (org-roam-db-query
+                     [:select properties
+                      :from nodes
+                      :where (and (= level 0)
+                                  (= file $s1))]
+                     (org-roam-node-file node)))
+               (props (caar res))
+               (entry (assoc "ROAM-TYPE" props)))
+      (cdr entry)))
+#+end_src
 **** node type
 #+name: roam-node-type
 #+begin_src emacs-lisp :tangle no
   (cl-defmethod org-roam-node-type ((node org-roam-node))
     "Return the TYPE of NODE."
-    (condition-case nil
-        (file-name-nondirectory
-         (directory-file-name
-          (file-name-directory
-           (file-relative-name (org-roam-node-file node) org-roam-directory))))
-      (error "")))
+    (or (org-roam-node-container-type node)
+        (condition-case nil
+            (file-name-nondirectory
+             (directory-file-name
+              (file-name-directory
+               (file-relative-name (org-roam-node-file node) org-roam-directory))))
+          (error ""))))
 #+end_src
 **** node context tags
 #+name: roam-node-context-tags
