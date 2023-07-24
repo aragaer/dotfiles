@@ -551,6 +551,7 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
     <<roam-node-hierarchy>>
     <<roam-node-type>>
     <<roam-node-context-tags>>
+    <<roam-node-container-type>>
     (push "ZK_TAGS" (cdr (assoc 'node-property org-roam-db-extra-links-exclude-keys)))
     (require 'org-roam-dailies))
 #+end_src
