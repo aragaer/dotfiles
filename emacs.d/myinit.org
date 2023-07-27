@@ -489,25 +489,41 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
        title)))
 #+end_src
 **** node container type
-#+name: roam-node-container-type
+Currently not used
+#+name: roam-node-namespace
 #+begin_src elisp :tangle no
-  (cl-defmethod org-roam-node-container-type ((node org-roam-node))
-    (when-let ((res (org-roam-db-query
-                     [:select properties
-                      :from nodes
-                      :where (and (= level 0)
-                                  (= file $s1))]
-                     (org-roam-node-file node)))
-               (props (caar res))
-               (entry (assoc "ROAM-TYPE" props)))
-      (cdr entry)))
+  (cl-defmethod org-roam-node-namespace ((node org-roam-node))
+    (cdr (assoc-string "ROAM-NAMESPACE" (org-roam-node-properties node))))
+
+  (defun +aragaer--add-roam-namespace (properties)
+    (if-let ((ns (org-entry-get-with-inheritance "ROAM-NAMESPACE")))
+        (cl-acons "ROAM-NAMESPACE" ns properties)
+      properties))
+
+  (advice-add 'org-roam-db-insert-node-data :around
+              (defun +aragaer--add-roam-namespace-on-save (fn &rest args)
+                (advice-add 'org-entry-properties
+                            :filter-return #'+aragaer--add-roam-namespace)
+                (unwind-protect
+                    (apply fn args)
+                  (advice-remove 'org-entry-properties
+                                 #'+aragaer--add-roam-namespace))))
+#+end_src
+**** explicit node category
+#+name: roam-node-explicit-category
+#+begin_src elisp :tangle no
+  (cl-defmethod org-roam-node-explicit-category ((node org-roam-node))
+    (let ((file-name (file-name-nondirectory (org-roam-node-file node)))
+          (category (org-roam-node-category node)))
+      (unless (string-prefix-p category file-name)
+          category)))
 #+end_src
 **** node type
 #+name: roam-node-type
 #+begin_src emacs-lisp :tangle no
   (cl-defmethod org-roam-node-type ((node org-roam-node))
     "Return the TYPE of NODE."
-    (or (org-roam-node-container-type node)
+    (or (org-roam-node-explicit-category node)
         (condition-case nil
             (file-name-nondirectory
              (directory-file-name
@@ -551,7 +567,7 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
     <<roam-node-hierarchy>>
     <<roam-node-type>>
     <<roam-node-context-tags>>
-    <<roam-node-container-type>>
+    <<roam-node-explicit-category>>
     (push "ZK_TAGS" (cdr (assoc 'node-property org-roam-db-extra-links-exclude-keys)))
     (require 'org-roam-dailies))
 #+end_src
