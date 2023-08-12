@@ -211,16 +211,20 @@ identifiers.
 #+BEGIN_SRC emacs-lisp :tangle no
   (defun vimacs/org-narrow-to-subtree ()
     (interactive)
-    (let ((org-indirect-buffer-display 'current-window))
+    (vimacs/org-narrow-to-subtree--inner))
+
+  (defun vimacs/org-narrow-to-subtree--inner (&optional level)
+    (let ((org-indirect-buffer-display 'current-window)
+          (level (or level (1+ (org-current-level)))))
       (if (not (boundp 'org-indirect-buffer-file-name))
           (let ((above-buffer (current-buffer))
                 (org-filename (buffer-file-name)))
-            (org-tree-to-indirect-buffer (1+ (org-current-level)))
+            (org-tree-to-indirect-buffer level)
             (setq-local org-indirect-buffer-file-name org-filename)
             (setq-local org-indirect-above-buffer above-buffer))
         (let ((above-buffer (current-buffer))
               (org-filename org-indirect-buffer-file-name))
-          (org-tree-to-indirect-buffer (1+ (org-current-level)))
+          (org-tree-to-indirect-buffer level)
           (setq-local org-indirect-buffer-file-name org-filename)
           (setq-local org-indirect-above-buffer above-buffer)))))
 
@@ -242,7 +246,7 @@ identifiers.
 ** after init hook
 #+name: org-after-init
 #+begin_src emacs-lisp :tangle no
-  (define-key org-mode-map (kbd "<C-tab>") 'vimacs/org-narrow-to-subtree)
+  ;(define-key org-mode-map (kbd "<C-tab>") 'vimacs/org-narrow-to-subtree)
   (define-key org-mode-map (kbd "<M-tab>") 'vimacs/org-widen-from-subtree)
 #+end_src
 ** use package
@@ -540,12 +544,21 @@ Currently not used
              :key #'string-to-char
              :test #'char-equal))
 #+end_src
+*** narrow to roam node
+#+name: narrow-to-roam-node
+#+begin_src elisp
+  (defun aragaer--narrow-to-org-roam-node ()
+    (interactive)
+    (let* ((node (org-roam-node-at-point))
+           (node-level (and node (org-roam-node-level node))))
+      (vimacs/org-narrow-to-subtree--inner node-level)))
+#+end_src
 *** use-package
 #+begin_src emacs-lisp :noweb yes
   (use-package org-roam
     :ensure t
     :hook
-    (after-init . org-roam-setup)
+    (after-init . org-roam-db-autosync-enable)
     :custom
     (org-roam-directory (file-truename "~/Dropbox/org/roam/"))
     (org-roam-db-update-method 'immediate)
@@ -559,7 +572,8 @@ Currently not used
             ("C-c j" . org-roam-dailies-map))
            :map org-mode-map
            (("C-c n i" . org-roam-node-insert)
-            ("C-c n w" . org-roam-refile)))
+            ("C-c n w" . org-roam-refile)
+            ("C-<tab>" . aragaer--narrow-to-org-roam-node)))
     :init
     (setq org-roam-v2-ack t)
     (setq slipboxes '("unsorted" "zk" "projects" "services"))
@@ -568,6 +582,7 @@ Currently not used
     <<roam-node-type>>
     <<roam-node-context-tags>>
     <<roam-node-explicit-category>>
+    <<narrow-to-roam-node>>
     (push "ZK_TAGS" (cdr (assoc 'node-property org-roam-db-extra-links-exclude-keys)))
     (require 'org-roam-dailies))
 #+end_src
