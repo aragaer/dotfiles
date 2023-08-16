@@ -206,35 +206,24 @@ identifiers.
      ("N" "Next including blocked" tags-todo "+next"
       ((org-agenda-todo-ignore-scheduled 'future)))))
 #+END_SRC
-*** vimacs narrow-to-subtree
-#+name: vimacs/subtree
+*** narrow-to-subtree
+Based on vimacs/narrow-to-subtree that I found somewhere in the
+internets.
+#+name: narrow-to-subtree
 #+BEGIN_SRC emacs-lisp :tangle no
-  (defun vimacs/org-narrow-to-subtree ()
-    (interactive)
-    (vimacs/org-narrow-to-subtree--inner))
-
-  (defun vimacs/org-narrow-to-subtree--inner (&optional level)
+  (defun aragaer--toggle-narrow (&optional level)
     (let ((org-indirect-buffer-display 'current-window)
           (level (or level (1+ (org-current-level)))))
-      (if (not (boundp 'org-indirect-buffer-file-name))
-          (let ((above-buffer (current-buffer))
-                (org-filename (buffer-file-name)))
-            (org-tree-to-indirect-buffer level)
-            (setq-local org-indirect-buffer-file-name org-filename)
-            (setq-local org-indirect-above-buffer above-buffer))
+      (if (boundp 'org-indirect-buffer-file-name)
+          (let ((above-buffer org-indirect-above-buffer)
+                (org-indirect-buffer-display 'current-window))
+            (kill-buffer)
+            (switch-to-buffer above-buffer))
         (let ((above-buffer (current-buffer))
-              (org-filename org-indirect-buffer-file-name))
+              (org-filename (buffer-file-name)))
           (org-tree-to-indirect-buffer level)
           (setq-local org-indirect-buffer-file-name org-filename)
           (setq-local org-indirect-above-buffer above-buffer)))))
-
-  (defun vimacs/org-widen-from-subtree ()
-    (interactive)
-    (when (boundp 'org-indirect-above-buffer)
-      (let ((above-buffer org-indirect-above-buffer)
-            (org-indirect-buffer-display 'current-window))
-        (kill-buffer)
-        (switch-to-buffer above-buffer))))
 #+END_SRC
 ** bind
 #+NAME: org-bind-keys
@@ -243,26 +232,16 @@ identifiers.
    ("C-c a" . org-agenda)
    ("C-c c" . org-capture))
 #+END_SRC
-** after init hook
-#+name: org-after-init
-#+begin_src emacs-lisp :tangle no
-  ;(define-key org-mode-map (kbd "<C-tab>") 'vimacs/org-narrow-to-subtree)
-  (define-key org-mode-map (kbd "<M-tab>") 'vimacs/org-widen-from-subtree)
-#+end_src
 ** use package
 #+BEGIN_SRC emacs-lisp :noweb yes
   (use-package org
     :init
-    <<vimacs/subtree>>
+    <<narrow-to-subtree>>
+    <<my-org-modules>>
     :bind
     <<org-bind-keys>>
     :mode ("\\.\\(org\\|org_archive\\|txt\\)$" . org-mode)
-    :hook
-    (org-mode . visual-line-mode)
-    :init
-    (add-hook 'after-init-hook (defun org-after-init ()
-                                 <<org-after-init>>))
-    <<my-org-modules>>
+    :hook (org-mode . visual-line-mode)
     :config
     (add-to-list 'org-todo-keyword-faces
                  '("CANCELLED" . (:foreground "blue" :weight bold)))
@@ -549,9 +528,8 @@ Currently not used
 #+begin_src elisp
   (defun aragaer--narrow-to-org-roam-node ()
     (interactive)
-    (let* ((node (org-roam-node-at-point))
-           (node-level (and node (org-roam-node-level node))))
-      (vimacs/org-narrow-to-subtree--inner node-level)))
+    (let ((node (org-roam-node-at-point)))
+      (aragaer--toggle-narrow (and node (org-roam-node-level node)))))
 #+end_src
 *** use-package
 #+begin_src emacs-lisp :noweb yes
@@ -651,10 +629,6 @@ Currently not used
 #+END_SRC
 * telega
 #+BEGIN_SRC emacs-lisp
-  (defun my-telega-ins--sticker-image (orig-fun &rest args)
-    (let ((telega-use-images nil))
-      (apply orig-fun args)))
-
   (defun telega/ignore-chatbuf (str)
     (let ((buf (get-buffer str)))
       (and buf (fboundp 'telega-buffer-p) (telega-buffer-p buf))))
@@ -700,7 +674,9 @@ Currently not used
     (telega-msg-status ((t (:inherit 'font-lock-constant-face))))
     :config
     (advice-add 'telega-ins--sticker-image :around
-                'my-telega-ins--sticker-image)
+                (defun +disable-telega-stickers (orig-fun &rest args)
+                  (let ((telega-use-images nil))
+                    (apply orig-fun args))))
     (set-face-attribute 'telega-entity-type-code nil :height 1.0)
     (set-face-attribute 'telega-entity-type-pre nil :height 1.0)
     :commands (telega)
