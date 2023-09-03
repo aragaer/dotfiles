@@ -532,6 +532,9 @@ Currently not used
     <<roam-node-context-tags>>
     <<roam-node-explicit-category>>
     <<narrow-to-roam-node>>
+    (with-eval-after-load
+        'recentf
+        (add-to-list 'recentf-exclude (f-join org-roam-directory ".*")))
     (push "ZK_TAGS" (cdr (assoc 'node-property org-roam-db-extra-links-exclude-keys)))
     (require 'org-roam-dailies))
 #+end_src
