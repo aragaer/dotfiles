@@ -183,19 +183,24 @@ Based on vimacs/narrow-to-subtree that I found somewhere in the
 internets.
 #+name: narrow-to-subtree
 #+BEGIN_SRC emacs-lisp :tangle no
-  (defun aragaer--toggle-narrow (&optional level)
-    (let ((org-indirect-buffer-display 'current-window)
-          (level (or level (1+ (org-current-level)))))
-      (if (boundp 'org-indirect-buffer-file-name)
-          (let ((above-buffer org-indirect-above-buffer)
-                (org-indirect-buffer-display 'current-window))
-            (kill-buffer)
-            (switch-to-buffer above-buffer))
-        (let ((above-buffer (current-buffer))
-              (org-filename (buffer-file-name)))
-          (org-tree-to-indirect-buffer level)
-          (setq-local org-indirect-buffer-file-name org-filename)
-          (setq-local org-indirect-above-buffer above-buffer)))))
+  (defun aragaer--toggle-narrow (&optional point)
+    "If buffer is narrowed, widen it (argument is ignored).
+  Otherwise if point is set it must be on an org heading."
+    (if (buffer-narrowed-p)
+        (let ((curbuf (current-buffer)))
+          (switch-to-buffer (buffer-base-buffer))
+          (kill-buffer curbuf))
+      (let* ((point (or point
+                        (save-excursion
+                          (org-back-to-heading t)
+                          (point))))
+             (elt (org-element-at-point point))
+             (title (org-element-property :raw-value elt))
+             (curpoint (point)))
+        (switch-to-buffer
+         (clone-indirect-buffer (concat (buffer-name) " -> " title) nil))
+        (org-narrow-to-subtree elt)
+        (goto-char curpoint))))
 #+END_SRC
 ** bind
 #+NAME: org-bind-keys
@@ -500,7 +505,7 @@ Currently not used
   (defun aragaer--narrow-to-org-roam-node ()
     (interactive)
     (let ((node (org-roam-node-at-point)))
-      (aragaer--toggle-narrow (and node (org-roam-node-level node)))))
+      (aragaer--toggle-narrow (and node (org-roam-node-point node)))))
 #+end_src
 *** use-package
 #+begin_src emacs-lisp :noweb yes
