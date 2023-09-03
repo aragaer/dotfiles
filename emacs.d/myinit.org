@@ -91,34 +91,6 @@ To be able to update lists in /custom/
     (add-hook 'after-init-hook
               (lambda () (load custom-file t))))
 #+END_SRC
-* evil mode
-#+BEGIN_SRC emacs-lisp
-  (use-package evil
-    :ensure t
-    :config
-    (fset 'evil-visual-update-x-selection 'ignore)
-    :custom
-    (evil-undo-system 'undo-tree)
-    (evil-search-module 'evil-search)
-    (evil-want-C-i-jump nil)
-    (evil-default-state 'emacs))
-#+END_SRC
-** treat underscore as a part of a word (in code)
-Changing underscore to part of a word globally affects highlighting in
-text modes which leads to hiccups in message-mode. I only need
-"underscore as word" for code where I usually use snake_case
-identifiers.
-#+BEGIN_SRC emacs-lisp
-  (add-hook 'prog-mode-hook
-            (lambda () (modify-syntax-entry ?_ "w")))
-#+END_SRC
-** undo-tree
-#+begin_src emacs-lisp
-  (use-package undo-tree
-    :ensure t
-    :config (global-undo-tree-mode t)
-    :custom (undo-tree-auto-save-history nil))
-#+end_src
 * org
 ** capture templates
 #+NAME: my-org-capture-templates
@@ -347,8 +319,7 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
     :custom
     (vdiff-truncate-lines t)
     :config
-    (define-key vdiff-mode-map (kbd "C-c") vdiff-mode-prefix-map)
-    (evil-define-key 'normal vdiff-mode-map "," vdiff-mode-prefix-map))
+    (define-key vdiff-mode-map (kbd "C-c") vdiff-mode-prefix-map))
 #+END_SRC
 ** ivy
 #+BEGIN_SRC emacs-lisp
