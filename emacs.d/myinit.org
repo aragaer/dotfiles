@@ -196,9 +196,11 @@ internets.
                           (point))))
              (elt (org-element-at-point point))
              (title (org-element-property :raw-value elt))
+             (new-buffer-name (concat (buffer-name) " -> " title))
              (curpoint (point)))
         (switch-to-buffer
-         (clone-indirect-buffer (concat (buffer-name) " -> " title) nil))
+         (or (get-buffer new-buffer-name)
+             (clone-indirect-buffer new-buffer-name nil)))
         (org-narrow-to-subtree elt)
         (goto-char curpoint))))
 #+END_SRC
@@ -503,9 +505,13 @@ Currently not used
 #+name: narrow-to-roam-node
 #+begin_src elisp
   (defun aragaer--narrow-to-org-roam-node ()
+    "If inside org-roam node and that node is heading, narrow to it.
+  Otherwise narrow to `nil' (nearest org heading)."
     (interactive)
     (let ((node (org-roam-node-at-point)))
-      (aragaer--toggle-narrow (and node (org-roam-node-point node)))))
+      (aragaer--toggle-narrow (and node
+                                   (< 0 (org-roam-node-level node))
+                                   (org-roam-node-point node)))))
 #+end_src
 *** use-package
 #+begin_src emacs-lisp :noweb yes
