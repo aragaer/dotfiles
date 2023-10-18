@@ -126,6 +126,13 @@ To be able to update lists in /custom/
   (use-package org-contrib
     :ensure t)
 #+end_src
+*** ob-async
+#+begin_src elisp
+  (use-package ob-async
+    :ensure t
+    :config
+    (setq ob-async-no-async-languages-alist '("elisp")))
+#+end_src
 *** org-habits custom
 #+NAME: org-habits-custom
 #+BEGIN_SRC emacs-lisp :tangle no
