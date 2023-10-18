@@ -598,6 +598,27 @@ Currently not used
 #+BEGIN_SRC emacs-lisp
   (rassq-delete-all 'change-log-mode auto-mode-alist)
 #+END_SRC
+** non-edit
+#+begin_src elisp
+  (use-package non-edit-mode
+    :ensure t
+    :bind ("C-<escape>" . non-edit-mode)
+    :hook ((prog-mode . non-edit-for-files)
+           (text-mode . non-edit-for-protected)
+           ((with-editor-mode mu4e-compose-mode) . (lambda () (non-edit-mode -1))))
+    :config
+    (defun is-protected (file-name)
+      (string-prefix-p org-roam-directory file-name))
+
+    (defun non-edit-for-protected ()
+      (when-let* ((file-name (buffer-file-name))
+                  (is-protected file-name))
+        (non-edit-mode)))
+
+    (defun non-edit-for-files ()
+      (when (buffer-file-name)
+        (non-edit-mode))))
+#+end_src
 * daily page
 #+BEGIN_SRC emacs-lisp
   (defun daily-page ()
