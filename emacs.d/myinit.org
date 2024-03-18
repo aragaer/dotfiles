@@ -158,6 +158,8 @@ To be able to update lists in /custom/
        (org-agenda-files (seq-remove
                           (lambda (file) (cl-search "mylife" file))
                           (org-agenda-files nil 'ifmode)))))
+     ("j" "Unreviewed journal" tags-todo "+@journal"
+      ((org-agenda-sorting-strategy '((agenda category-up)))))
      ("t" . "Tree")
      ("tn" "Next" occur-tree "TODO.*:next:")
      ("tw" "Waiting" occur-tree "TODO.*:waiting:")
@@ -208,6 +210,7 @@ internets.
         (switch-to-buffer
          (or (get-buffer new-buffer-name)
              (clone-indirect-buffer new-buffer-name nil)))
+        (org-fold-reveal)
         (org-narrow-to-subtree elt)
         (goto-char curpoint))))
 #+END_SRC
@@ -256,6 +259,7 @@ internets.
        (org-agenda-files :maxlevel . 3)))
     (org-capture-bookmark nil)
     (org-startup-indented t)
+    (org-fold-show-context-detail '((default . canonical)))
     :custom-face
     (org-agenda-calendar-sexp ((t (:foreground "dark violet" :weight bold))))
     (org-mode-line-clock ((t (:background "grey75" :foreground "red" :box (:line-width -1 :style released-button))))))
@@ -313,7 +317,7 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
         (org-hide-block-toggle nil t e))))
 
   (advice-add
-   'org-hide-block-all
+   'org-fold-hide-block-all
    :after
    (lambda (&rest r) (org-block-map #'aragaer/show-nohide))
    '((name . "show-nohide")))
@@ -520,12 +524,27 @@ Currently not used
                                    (< 0 (org-roam-node-level node))
                                    (org-roam-node-point node)))))
 #+end_src
+*** async roam-db-autosync
+#+name: async-roam-autosync
+#+begin_src elisp
+  (defun enable-roam-autosync ()
+    (let ((proc (start-process "roam-db-sync" "*roam-db-sync*"
+                               "emacs" "--fg-daemon=roam-db-sync" "-nw"
+                               "--execute" "(remove-hook 'emacs-startup-hook 'enable-roam-autosync)"
+                               "--execute" "(org-roam-db-sync)"
+                               "--kill")))
+      (set-process-sentinel proc
+                            (lambda (process event)
+                              (when (string= event "finished\n")
+                                (org-roam-db-autosync-enable)
+                                (message "Roam DB sync done, autosync enabled"))))))
+#+end_src
 *** use-package
 #+begin_src emacs-lisp :noweb yes
   (use-package org-roam
     :ensure t
     :hook
-    (emacs-startup . org-roam-db-autosync-enable)
+    (emacs-startup . enable-roam-autosync)
     :custom
     (org-roam-directory (file-truename "~/Dropbox/org/roam/"))
     (org-roam-db-update-method 'immediate)
@@ -533,10 +552,15 @@ Currently not used
      (concat (propertize "${type:15}" 'face 'org-tag)
              "${title:*} "
              (propertize "${tags:20}" 'face 'org-tag)))
+    (org-roam-capture-templates
+     `(("d" "default" entry "* ${title}\n%?"
+        :target (node "Unsorted notes")
+        :prepare-finalize ,(lambda ()
+                             (beginning-of-buffer)
+                             (org-id-get-create)))))
     :bind ((("C-c n l" . org-roam-buffer-toggle)
             ("C-c n c" . org-roam-capture)
-            ("C-c n f" . org-roam-node-find)
-            ("C-c j" . org-roam-dailies-map))
+            ("C-c n f" . org-roam-node-find))
            :map org-mode-map
            (("C-c n i" . org-roam-node-insert)
             ("C-c n w" . org-roam-refile)
@@ -550,6 +574,7 @@ Currently not used
     <<roam-node-context-tags>>
     <<roam-node-explicit-category>>
     <<narrow-to-roam-node>>
+    <<roam-db-autosync>>
     (with-eval-after-load
         'recentf
         (add-to-list 'recentf-exclude (f-join org-roam-directory ".*")))
