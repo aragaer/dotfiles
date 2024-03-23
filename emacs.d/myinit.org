@@ -1,7 +1,8 @@
 #+STARTUP: overview
 * use-package
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :noweb yes
   (require 'use-package)
+  <<benchmark>>
 #+END_SRC
 ** quelpa
 #+begin_src emacs-lisp
@@ -581,6 +582,14 @@ Currently not used
     (push "ZK_TAGS" (cdr (assoc 'node-property org-roam-db-extra-links-exclude-keys)))
     (require 'org-roam-dailies))
 #+end_src
+** benchmark
+#+NAME: benchmark
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package benchmark-init
+    :ensure t
+    :config
+    (add-hook 'after-init-hook 'benchmark-init/deactivate))
+#+END_SRC
 * helpers
 ** hledger
 #+BEGIN_SRC emacs-lisp
