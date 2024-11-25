@@ -20,7 +20,7 @@ xmobarCurrentWorkspaceColor = "#CEFFAC"  -- Current workspace
 
 defaults = defaultConfig {
     modMask = mod4Mask, -- use the Windows button as mod
-    terminal = "urxvt",
+    terminal = "st",
     manageHook = composeAll [
                             className =? "mpv" --> doFloat,
                             className =? "obs" --> doShift "9",
