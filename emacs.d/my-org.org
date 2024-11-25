@@ -87,7 +87,7 @@ Default sort is by time only.
        ((< db da) +1)
        (t (org-cmp-time a b)))))
 
-  (setq org-agenda-cmp-user-defined #'aragaer/org-cmp-time-and-date)
+  (setopt org-agenda-cmp-user-defined #'aragaer/org-cmp-time-and-date)
 
   (cl-nsubstitute 'user-defined-up 'time-up
                   (alist-get 'agenda org-agenda-sorting-strategy))
@@ -180,7 +180,7 @@ Speeds up the save greatly
                             (org-up-heading-or-point-min)
                             (let ((node (org-roam-node-at-point)))
                               (and node (org-roam-node-title node))))))
-          (category (org-get-category)))
+          (category (and (derived-mode-p 'org-mode) (org-get-category))))
       (if (and parent-title
                (string-equal category file-name))
           parent-title
@@ -215,77 +215,6 @@ tasks."
      tags))
 
   (advice-add 'org-remove-uninherited-tags :filter-args #'aragaer/remove-hash-tags)
-#+end_src
-** Roam daily notes
-#+begin_src emacs-lisp
-    (setq org-roam-dailies-directory "daily/")
-
-    (setq aragaer/roam-daily-template
-          (let ((template-path (expand-file-name (locate-user-emacs-file "templates/roam-daily-template.org"))))
-            (concat "%[" template-path "]")
-            ))
-
-    (setq org-roam-dailies-capture-templates
-          `(("d" "default" entry
-             "* %? :review:"
-             :target (file+head "%<%Y-%m-%d>.org"
-                                ,aragaer/roam-daily-template))))
-#+end_src
-** Roam weeky/yearly notes (WIP)
-#+begin_src emacs-lisp
-  (defun aragaer/roam-get-or-create (title template)
-    (or (org-roam-node-from-title-or-alias title)
-        (progn
-          (message "creating a node %s" title)
-          (org-roam-capture- :node (org-roam-node-create :title title)
-                             :info `(:title ,title)
-                             :templates `(("d" "default" plain ""
-                                           :target ,template
-                                           :immediate-finish t))
-                             :props '(:finalize find-file))
-          (org-roam-node-from-title-or-alias title))))
-
-    (defun aragaer/this-week-yearly ()
-      (let* ((journal-directory (expand-file-name "journal/" org-roam-directory))
-             (node-name (format-time-string "Year %Y"))
-             (node (aragaer/roam-get-or-create node-name
-                                               `(file+head ,(expand-file-name "%<%Y>.org" journal-directory)
-                                                           "#+title: %{title}\n"))))
-        (org-link-make-string
-         (concat "id:" (org-roam-node-id node))
-         node-name)))
-
-    (defun aragaer/roam-weekly-template (title)
-      (let ((template-path (expand-file-name (locate-user-emacs-file "templates/roam-weekly-template.org"))))
-        (concat "#+title: " title "\n%[" template-path "]")))
-
-    (defun aragaer/this-day-weekly ()
-      (interactive)
-      (let* ((journal-directory (expand-file-name "journal/" org-roam-directory))
-             (node-name (format-time-string "Year %Y week %V"))
-             (filename (expand-file-name "%<%Y-week-%V>.org" journal-directory))
-             (template (aragaer/roam-weekly-template node-name))
-             (node (aragaer/roam-get-or-create node-name
-                                               `(file+head ,filename
-                                                           ,template))))
-        (if node
-            (org-link-make-string
-             (concat "id:" (org-roam-node-id node))
-             (format-time-string "%V"))
-          (progn
-            (message "node %s not created!" node-name)
-            ""))))
-
-    (defun aragaer/this-week-begin-date ()
-      (if (string= "1" (format-time-string "%u"))
-          (format-time-string "%Y-%m-%d")
-        (org-read-date nil nil "-1mon")))
-
-    (defun aragaer/next-week-begin-date ()
-      (if (string= "1" (format-time-string "%u"))
-          (org-read-date nil nil "+7")
-        (org-read-date nil nil "+1mon")))
-
 #+end_src
 ** Zettelkasten in roam
 #+begin_src emacs-lisp
@@ -335,4 +264,33 @@ tasks."
             (org-roam-node-visit node nil)
           (message "Slipbox file not found for %s" (org-roam-node-title node))))))
 #+end_src
+** filter nodes by tag
+#+begin_src elisp
+  (defvar aragaer--roam-node-tag-filter nil
+    "Set to non-nil to only show nodes having the tag")
 
+  (defun +aragaer--filtered-roam-node-read (orig-fun &rest args)
+    (pcase-let ((`(,initial-input ,filter-fn . ,rest) args))
+      (let ((new-filter (or filter-fn
+                            (and aragaer--roam-node-tag-filter
+                                 (lambda (n)
+                                   (member aragaer--roam-node-tag-filter
+                                           (org-roam-node-tags n)))))))
+        (apply orig-fun `(,initial-input ,new-filter . ,rest)))))
+
+  (advice-add 'org-roam-node-read :around #'+aragaer--filtered-roam-node-read)
+#+end_src
+** refile to container
+#+begin_src elisp
+  (defun aragaer--roam-refile (&optional any-target)
+    (interactive "P")
+    (let ((node (if any-target
+                    (org-roam-node-read "" nil nil t "Refile to: ")
+                  (let ((org-roam-node-display-template "${title:*} ${context-tag:10}")
+                        (aragaer--roam-node-tag-filter (unless any-target "#container")))
+                    (org-roam-node-read "" nil nil t "Refile to container: ")))))
+      (when node
+        (org-roam-refile node))))
+
+  (define-key org-mode-map (kbd "C-c n w") 'aragaer--roam-refile)
+#+end_src

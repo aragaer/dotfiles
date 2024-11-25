@@ -46,6 +46,8 @@ To be able to update lists in /custom/
 #+BEGIN_SRC emacs-lisp :noweb yes
   (use-package emacs
     :ensure t
+    :bind
+    (("C-%" . query-replace-regexp))
     :config
     (tool-bar-mode -1)
     (menu-bar-mode -1)
@@ -193,13 +195,19 @@ Based on vimacs/narrow-to-subtree that I found somewhere in the
 internets.
 #+name: narrow-to-subtree
 #+BEGIN_SRC emacs-lisp :tangle no
+  (defvar-local this-buffer-refcount 0
+    "\"Reference count\" for an indirect buffer created using
+   \"toggle-narrow\".")
+
   (defun aragaer--toggle-narrow (&optional point)
     "If buffer is narrowed, widen it (argument is ignored).
   Otherwise if point is set it must be on an org heading."
     (if (buffer-narrowed-p)
-        (let ((curbuf (current-buffer)))
+        (let ((curbuf (current-buffer))
+              (last-ref-p (= 0 (cl-decf this-buffer-refcount))))
           (switch-to-buffer (buffer-base-buffer))
-          (kill-buffer curbuf))
+          (when last-ref-p
+              (kill-buffer curbuf)))
       (let* ((point (or point
                         (save-excursion
                           (org-back-to-heading t)
@@ -211,6 +219,7 @@ internets.
         (switch-to-buffer
          (or (get-buffer new-buffer-name)
              (clone-indirect-buffer new-buffer-name nil)))
+        (cl-incf this-buffer-refcount)
         (org-fold-reveal)
         (org-narrow-to-subtree elt)
         (goto-char curpoint))))
@@ -218,9 +227,7 @@ internets.
 ** bind
 #+NAME: org-bind-keys
 #+BEGIN_SRC emacs-lisp :tangle no
-  (("C-c l" . org-store-link)
-   ("C-c a" . org-agenda)
-   ("C-c c" . org-capture))
+  (("C-c a" . org-agenda))
 #+END_SRC
 ** use package
 #+BEGIN_SRC emacs-lisp :noweb yes
@@ -315,7 +322,7 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
     (let* ((e (org-element-at-point))
            (subtype (org-element-property :type e)))
       (when (equal subtype "nohide")
-        (org-hide-block-toggle nil t e))))
+        (org-fold-hide-block-toggle nil t e))))
 
   (advice-add
    'org-fold-hide-block-all
@@ -342,26 +349,28 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
 #+END_SRC
 ** ivy
 #+BEGIN_SRC emacs-lisp
-    (use-package ivy
-      :ensure t
-      :config
-      (ivy-mode t)
-      (setq ivy-use-virtual-buffers t)
-      (setq ivy-count-format "(%d/%d) "))
+  (use-package ivy
+    :ensure t
+    :custom
+    (ivy-use-virtual-buffers t)
+    (ivy-count-format "(%d/%d) ")
+    :config
+    (ivy-mode t))
 #+END_SRC
 ** reverse-im
 #+BEGIN_SRC emacs-lisp
   (use-package reverse-im
     :ensure t
     :demand t
-    :bind
-    ("M-T" . reverse-im-translate-word)
     :custom
     (reverse-im-char-fold t)
-    ;(reverse-im-read-char-advice-function #'reverse-im-read-char-include)
+    (reverse-im-read-char-advice-function #'reverse-im-read-char-exclude)
     (reverse-im-input-methods '("russian-computer"))
     :config
-    (reverse-im-mode t))
+    (reverse-im-mode t)
+    ;; workaround for some read-only modes
+    (suppress-keymap org-agenda-mode-map)
+    )
 #+END_SRC
 ** magit
 #+BEGIN_SRC emacs-lisp
@@ -395,9 +404,7 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
      :map goto-map
      ("M-g" . avy-goto-line)
      :map search-map
-     ("M-s" . avy-goto-word-1))
-    :config
-    (avy-setup-default))
+     ("M-s" . avy-goto-word-1)))
 #+end_src
 ** org-journal
 #+begin_src emacs-lisp
@@ -435,10 +442,10 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
 #+begin_src emacs-lisp
   (use-package project
     :ensure t
-    :config
-    (setq project-switch-commands
-          '((?f "Find file" project-find-file)
-            (?g "Magit status" magit-status))))
+    :custom
+    (project-switch-commands
+     '((?f "Find file" project-find-file)
+       (?g "Magit status" magit-status))))
 #+end_src
 ** emacs-everywhere
 #+begin_src emacs-lisp
@@ -544,6 +551,7 @@ Currently not used
 #+begin_src emacs-lisp :noweb yes
   (use-package org-roam
     :ensure t
+    :load-path (lambda () (expand-file-name "~/Projects/org-roam/"))
     :hook
     (emacs-startup . enable-roam-autosync)
     :custom
@@ -555,7 +563,7 @@ Currently not used
              (propertize "${tags:20}" 'face 'org-tag)))
     (org-roam-capture-templates
      `(("d" "default" entry "* ${title}\n%?"
-        :target (node "Unsorted notes")
+        :target (node "unsorted slipbox")
         :prepare-finalize ,(lambda ()
                              (beginning-of-buffer)
                              (org-id-get-create)))))
@@ -564,7 +572,6 @@ Currently not used
             ("C-c n f" . org-roam-node-find))
            :map org-mode-map
            (("C-c n i" . org-roam-node-insert)
-            ("C-c n w" . org-roam-refile)
             ("C-<tab>" . aragaer--narrow-to-org-roam-node)))
     :init
     (setq org-roam-v2-ack t)
@@ -613,7 +620,7 @@ Currently not used
 ** my-writing-mode
 #+BEGIN_SRC emacs-lisp
   (define-derived-mode my-writing-mode org-mode "my-writing"
-    (setq olivetti-body-width 120)
+    (setopt olivetti-body-width 120)
     (olivetti-mode t))
 #+END_SRC
 ** hooks
@@ -624,8 +631,8 @@ Currently not used
 *** golang
 #+BEGIN_SRC emacs-lisp
   (add-hook 'go-mode-hook (lambda ()
-                            (setq indent-tabs-mode t)
-                            (setq tab-width 4)))
+                            (setopt indent-tabs-mode t
+                                    tab-width 4)))
 #+END_SRC
 *** octave
 #+BEGIN_SRC emacs-lisp
@@ -703,6 +710,7 @@ Currently not used
           ("c" . telega-chat-with)
     :map telega-chat-mode-map
           ("C-'" . aragaer--telega+avy-goto))
+    :hook (telega-root-mode . hl-line-mode)
     :custom
     (telega-use-images t)
     (telega-completing-read-function #'ivy-completing-read)
@@ -724,6 +732,7 @@ Currently not used
                 (defun +disable-telega-stickers (orig-fun &rest args)
                   (let ((telega-use-images nil))
                     (apply orig-fun args))))
+    (telega-contact-birthdays-mode -1)
     (set-face-attribute 'telega-entity-type-code nil :height 1.0)
     (set-face-attribute 'telega-entity-type-pre nil :height 1.0)
     :commands (telega)
@@ -733,12 +742,7 @@ Currently not used
 #+BEGIN_SRC emacs-lisp
   (use-package elfeed
     :ensure t
-    :bind (("C-c f" . elfeed))
-    :custom
-    (elfeed-feeds
-     '(("https://github.com/simonmichael/hledger/releases.atom" github hledger)
-       ("https://dilbert.com/feed" comics)
-       ("https://xkcd.com/rss.xml" comics))))
+    :bind (("C-c f" . elfeed)))
 
   (use-package elfeed-goodies
     :ensure t
@@ -770,6 +774,10 @@ Currently not used
   (setq browse-url-browser-function 'browse-url-generic
         browse-url-generic-program (car *browsers*))
 #+END_SRC
+** time locale
+#+begin_src elisp
+  (setq system-time-locale "C")
+#+end_src
 * load local settings
 #+BEGIN_SRC emacs-lisp
   (let ((local-settings-file (locate-user-emacs-file "local_settings.el")))
