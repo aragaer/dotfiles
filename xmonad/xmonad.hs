@@ -18,7 +18,7 @@ import XMonad.Util.Run(spawnPipe)
 xmobarTitleColor = "#FFB6B0" -- Current window title
 xmobarCurrentWorkspaceColor = "#CEFFAC"  -- Current workspace
 
-defaults = defaultConfig {
+defaults = def {
     modMask = mod4Mask, -- use the Windows button as mod
     terminal = "st",
     manageHook = composeAll [
@@ -26,9 +26,8 @@ defaults = defaultConfig {
                             className =? "obs" --> doShift "9",
                             manageDocks,
                             isFullscreen --> doFullFloat,
-                            manageHook defaultConfig],
+                            manageHook def],
     layoutHook = avoidStruts $ smartBorders $ minimize $ boringWindows $ layoutHook desktopConfig,
-    handleEventHook = handleEventHook defaultConfig <+> XMonad.Hooks.EwmhDesktops.fullscreenEventHook,
     startupHook = setWMName "LG3D"
 } `additionalKeys` myKeys
 
@@ -44,7 +43,7 @@ myKeys = [((mod4Mask, xK_m), withFocused minimizeWindow)
 
 main = do
     xmproc <- spawnPipe "xmobar ~/.xmonad/xmobar.hs"
-    xmonad . docks $ ewmh $ defaults {
+    xmonad . docks $ ewmhFullscreen $ ewmh $ defaults {
       logHook =  dynamicLogWithPP $ def {
             ppOutput = System.IO.hPutStrLn xmproc
           , ppTitle = xmobarColor xmobarTitleColor "" . shorten 100

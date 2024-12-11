@@ -1,5 +1,5 @@
 Config {
-    font = "xft:M+ 2m:size=10:bold:antialias=true"
+    font = "M+ 2m bold 10"
     bgColor = "#000000",
     fgColor = "#ffffff",
     position = Top,
