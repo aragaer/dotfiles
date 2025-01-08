@@ -1,20 +1,20 @@
 * font
 #+begin_src elisp
-  (use-package faces
-    :config
-    (when (fboundp 'set-fontset-font)
-      ;; force M+ for japanese glyphs
-      (set-fontset-font t 'han
-                        (font-spec :family "M+ 2p light")
-                        nil 'prepend)
-      ;; force Noto for symbols
-      (set-fontset-font t 'symbol
-                        "Noto Emoji" nil))
-    :custom
-    (use-default-font-for-symbols nil)
-    :custom-face
-    (fixed-pitch ((t (:family "M+ 1mn"))))
-    (default ((t (:family "M+ 1mn")))))
+    (use-package faces
+      :config
+      (when (fboundp 'set-fontset-font)
+        ;; force M+ for japanese glyphs
+        (set-fontset-font t 'han
+                          (font-spec :family "M+ 2p light")
+                          nil 'prepend)
+        ;; force Noto for symbols
+        (set-fontset-font t 'symbol
+                          "Noto Emoji" nil))
+      :custom
+      (use-default-font-for-symbols nil)
+      :custom-face
+      (fixed-pitch ((t (:family "M+ 1mn"))))
+      (default ((t (:family "M+ 1mn")))))
 #+end_src
 * browsers
 #+begin_src elisp

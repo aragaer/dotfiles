@@ -218,51 +218,34 @@ tasks."
 #+end_src
 ** Zettelkasten in roam
 #+begin_src emacs-lisp
-  (defun aragaer/zk-node-p (n)
-    (member (org-roam-node-type n) (mapcar (lambda (x)
-                                             (if (listp x)
-                                                 (car x)
-                                               x)) slipboxes)))
-
-  (setq roam-zk-template
-        `(file+head "unsorted/%<%Y%m%d%H%M%S>-${slug}.org"
-                    ,(combine-and-quote-strings
-                      `("#+title: ${title}"
-                        "#+startup: showall"
-                        "")
-                      "\n")))
-
-  (setq aragaer/roam-zk-templates
-        `(("z" "zettel" plain "%?"
-           :target ,roam-zk-template
-           :immediate-finish t
-           :unnarrowed t)))
-
-  (defun aragaer/org-roam-find-zk (&optional keys)
-    (interactive)
-    (org-roam-node-find
-     t "" #'aragaer/zk-node-p nil
-     :templates aragaer/roam-zk-templates))
-
-  (defun aragaer/org-roam-insert-zk (&optional keys)
-    (interactive)
-    (org-roam-node-insert
-     'aragaer/zk-node-p
-     :templates aragaer/roam-zk-templates))
-
-  (define-key global-map (kbd "C-c n F") 'aragaer/org-roam-find-zk)
-  (define-key org-mode-map (kbd "C-c n I") 'aragaer/org-roam-insert-zk)
   (define-key global-map (kbd "C-c n s")
-    (defun aragaer/org-roam-find-slipbox ()
+     (defun aragaer/org-roam-find-slipbox ()
+       (interactive)
+       (let* ((org-roam-node-display-template
+               (concat "${title:*} "
+                       (propertize "${context-tag:10}" 'face 'org-tag)))
+              (aragaer--roam-node-tag-filter "#slipbox")
+              (node (org-roam-node-read
+                     "" nil nil t "Open slipbox: ")))
+         (if (org-roam-node-file node)
+             (org-roam-node-visit node nil)
+           (message "Slipbox file not found for %s"
+                    (org-roam-node-title node))))))
+
+  (define-key global-map (kbd "C-c n h")
+    (defun aragaer/org-roam-find-hub ()
       (interactive)
-      (let* ((org-roam-node-display-template "${title:*} ${context-tag:10}")
-             (node (org-roam-node-read
-                   "" (lambda (n)
-                        (member "#slipbox" (org-roam-node-tags n)))
-                   nil t "Open slipbox: ")))
-        (if (org-roam-node-file node)
-            (org-roam-node-visit node nil)
-          (message "Slipbox file not found for %s" (org-roam-node-title node))))))
+      (let* ((org-roam-node-display-template
+              (concat (propertize "${type:15}" 'face 'org-tag)
+                      "${title:*} "
+                      (propertize "${context-tag:10}" 'face 'org-tag))))
+        (when-let* ((node (org-roam-node-read
+                           "" (lambda (n)
+                                (or
+                                 (member "#hub" (org-roam-node-tags n))
+                                 (member "MOC" (org-roam-node-tags n))))
+                           nil t "Open hub: ")))
+          (org-roam-node-visit node nil)))))
 #+end_src
 ** filter nodes by tag
 #+begin_src elisp
@@ -286,7 +269,9 @@ tasks."
     (interactive "P")
     (let ((node (if any-target
                     (org-roam-node-read "" nil nil t "Refile to: ")
-                  (let ((org-roam-node-display-template "${title:*} ${context-tag:10}")
+                  (let ((org-roam-node-display-template
+                          (concat "${title:*} "
+                                  (propertize "${context-tag:10}" 'face 'org-tag)))
                         (aragaer--roam-node-tag-filter (unless any-target "#container")))
                     (org-roam-node-read "" nil nil t "Refile to container: ")))))
       (when node

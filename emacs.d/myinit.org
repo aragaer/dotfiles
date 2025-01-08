@@ -54,6 +54,7 @@ To be able to update lists in /custom/
     (global-font-lock-mode 1)
     (global-auto-revert-mode t)
     (global-unset-key (kbd "C-x C-c"))
+    (global-unset-key (kbd "C-x t"))
     <<narrow-commands>>
     (setq-default indent-tabs-mode nil)
     (setq show-trailing-whitespace t
@@ -199,7 +200,20 @@ internets.
     "\"Reference count\" for an indirect buffer created using
    \"toggle-narrow\".")
 
-  (defun aragaer--toggle-narrow (&optional point)
+  (defun aragaer--get-narrow-point ()
+    (unless (org-before-first-heading-p)
+      (save-excursion
+        (org-back-to-heading t)
+        (point))))
+
+  (defun aragaer--narrow-buffer-name (&optional point)
+    (if-let* ((point (or point (aragaer--get-narrow-point)))
+              (elt (org-element-at-point point))
+              (title (org-element-property :raw-value elt)))
+        (concat (buffer-name) " -> " title)
+      (buffer-name)))
+
+  (defun aragaer--toggle-narrow (&optional point no-switch)
     "If buffer is narrowed, widen it (argument is ignored).
   Otherwise if point is set it must be on an org heading."
     (if (buffer-narrowed-p)
@@ -207,21 +221,19 @@ internets.
               (last-ref-p (= 0 (cl-decf this-buffer-refcount))))
           (switch-to-buffer (buffer-base-buffer))
           (when last-ref-p
-              (kill-buffer curbuf)))
-      (let* ((point (or point
-                        (save-excursion
-                          (org-back-to-heading t)
-                          (point))))
-             (elt (org-element-at-point point))
-             (title (org-element-property :raw-value elt))
-             (new-buffer-name (concat (buffer-name) " -> " title))
-             (curpoint (point)))
+            (kill-buffer curbuf)))
+      (when-let* ((point (or point (aragaer--get-narrow-point)))
+                  (new-buffer-name (aragaer--narrow-buffer-name point))
+                  (curpoint (point)))
         (switch-to-buffer
          (or (get-buffer new-buffer-name)
              (clone-indirect-buffer new-buffer-name nil)))
         (cl-incf this-buffer-refcount)
-        (org-fold-reveal)
-        (org-narrow-to-subtree elt)
+        (goto-char point)
+        (org-fold-show-entry)
+        (org-fold-show-children 1)
+        (org-fold-hide-drawer-all)
+        (org-narrow-to-subtree)
         (goto-char curpoint))))
 #+END_SRC
 ** bind
@@ -406,38 +418,6 @@ wrapped in blocks should be visible. For that I use ':wrap nohide'.
      :map search-map
      ("M-s" . avy-goto-word-1)))
 #+end_src
-** org-journal
-#+begin_src emacs-lisp
-  (use-package org-journal
-    :ensure t
-    :defer t
-    :config
-    (setq org-journal-dir "~/Dropbox/mind_dump/journal"
-          org-journal-file-format "journal-%Y-%m-%d.org")
-    :custom
-    (org-journal-file-type 'weekly)
-    (org-journal-date-format "%A, %Y-%m-%d")
-    (org-journal-start-on-weekday 7)
-    (org-journal-hide-entries-p t)
-    (org-journal-enable-agenda-integration t)
-    (org-journal-file-header (lambda (time) "#+startup: overview\n#+startup: shrink\n#+category: journal\n")))
-
-  (defun org-journal-find-location ()
-    ;; Open today's journal, but specify a non-nil prefix argument in order to
-    ;; inhibit inserting the heading; org-capture will insert the heading.
-    (org-journal-new-entry t)
-    ;; Position point on the journal's top-level heading so that org-capture
-    ;; will add the new entry as a child entry.
-    (goto-char (point-min)))
-
-  (defvar org-journal--date-location-scheduled-time nil)
-
-  (defun org-journal-date-location (&optional scheduled-time)
-    (let ((scheduled-time (or scheduled-time (org-read-date nil nil nil "Date:"))))
-      (setq org-journal--date-location-scheduled-time scheduled-time)
-      (org-journal-new-entry t (org-time-string-to-time scheduled-time))
-      (goto-char (point-max))))
-#+end_src
 ** project.el
 #+begin_src emacs-lisp
   (use-package project
@@ -530,7 +510,10 @@ Currently not used
     (let ((node (org-roam-node-at-point)))
       (aragaer--toggle-narrow (and node
                                    (< 0 (org-roam-node-level node))
-                                   (org-roam-node-point node)))))
+                                   (org-roam-node-point node)))
+      (when (buffer-narrowed-p)
+        (setq-local bookmark-make-record-function
+                    #'aragaer--roam-node-make-bookmark-record))))
 #+end_src
 *** async roam-db-autosync
 #+name: async-roam-autosync
@@ -555,7 +538,7 @@ Currently not used
     :hook
     (emacs-startup . enable-roam-autosync)
     :custom
-    (org-roam-directory (file-truename "~/Dropbox/org/roam/"))
+    (org-roam-directory (expand-file-name "~/Dropbox/org/roam/"))
     (org-roam-db-update-method 'immediate)
     (org-roam-node-display-template
      (concat (propertize "${type:15}" 'face 'org-tag)
@@ -575,7 +558,6 @@ Currently not used
             ("C-<tab>" . aragaer--narrow-to-org-roam-node)))
     :init
     (setq org-roam-v2-ack t)
-    (setq slipboxes '("unsorted" "zk" "projects" "services"))
     :config
     <<roam-node-hierarchy>>
     <<roam-node-type>>
@@ -597,6 +579,11 @@ Currently not used
     :config
     (add-hook 'after-init-hook 'benchmark-init/deactivate))
 #+END_SRC
+** org-roam-ql
+#+begin_src elisp
+  (use-package org-roam-ql
+    :ensure t)
+#+end_src
 * helpers
 ** hledger
 #+BEGIN_SRC emacs-lisp
@@ -778,20 +765,13 @@ Currently not used
 #+begin_src elisp
   (setq system-time-locale "C")
 #+end_src
-* load local settings
+* extra stuff
+** load local settings
 #+BEGIN_SRC emacs-lisp
-  (let ((local-settings-file (locate-user-emacs-file "local_settings.el")))
-    (if (file-exists-p local-settings-file)
-        (load local-settings-file)))
-  (let ((local-org-settings-file (locate-user-emacs-file "local.org")))
-    (if (file-exists-p local-org-settings-file)
-        (org-babel-load-file local-org-settings-file)))
-#+END_SRC
-* extra org things
-#+BEGIN_SRC emacs-lisp
-  (add-hook 'after-init-hook
-            (defun load-extra-org-stuff ()
-              (let ((org-tweaks-file (locate-user-emacs-file "my-org.org")))
-                (if (file-exists-p org-tweaks-file)
-                    (org-babel-load-file org-tweaks-file)))))
+  (dolist (file '("local_settings.el"))
+    (when-let (local-file (locate-user-emacs-file file))
+      (and (file-exists-p local-file) (load local-file))))
+  (dolist (file '("local.org" "my-org.org" "private.org.gpg"))
+    (when-let (local-file (locate-user-emacs-file file))
+      (and (file-exists-p local-file) (aragaer--load-config local-file))))
 #+END_SRC
