@@ -259,7 +259,7 @@ tasks."
                                  (lambda (n)
                                    (member aragaer--roam-node-tag-filter
                                            (org-roam-node-tags n)))))))
-        (apply orig-fun `(,initial-input ,new-filter . ,rest)))))
+        (apply orig-fun initial-input new-filter rest))))
 
   (advice-add 'org-roam-node-read :around #'+aragaer--filtered-roam-node-read)
 #+end_src
